@@ -12,27 +12,31 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role_id'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    // Relación con Rol
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    // Verificar si el usuario tiene un permiso
+    public function hasPermission($permissionName)
+    {
+        return $this->role
+            ? $this->role->permissions()->where('nombre', $permissionName)->exists()
+            : false;
+    }
     /**
      * Get the attributes that should be cast.
      *
