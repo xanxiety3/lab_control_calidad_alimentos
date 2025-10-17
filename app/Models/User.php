@@ -49,4 +49,18 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function isAdmin()
+    {
+        return $this->role->nombre === 'admin';
+    }
+
+    public function scopeActivos($query)
+    {
+        return $query->where('estado', true);
+    }
+
+    public function scopeInactivos($query)
+    {
+        return $query->where('estado', false);
+    }
 }

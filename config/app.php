@@ -12,8 +12,8 @@ return [
     | other UI elements where an application name needs to be displayed.
     |
     */
+    'name' => env('APP_NAME', 'LCCA - Laboratorio de Control de Calidad de Alimentos'),
 
-    'name' => env('APP_NAME', 'Laravel'),
 
     /*
     |--------------------------------------------------------------------------
