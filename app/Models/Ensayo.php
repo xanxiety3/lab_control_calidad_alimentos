@@ -10,14 +10,23 @@ class Ensayo extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nombre', 'tipo_muestra', 'unidad_medida',
-        'intervalo_medicion', 'metodo_norma', 'activo'
+        'nombre',
+        'tipo_muestra_id',
+        'unidad_medida',
+        'intervalo_medicion',
+        'metodo_norma',
+        'activo'
     ];
+
 
     public function muestras()
     {
         return $this->belongsToMany(Muestra::class, 'muestra_ensayo')
             ->withPivot('observaciones')
             ->withTimestamps();
+    }
+    public function tipoMuestra()
+    {
+        return $this->belongsTo(TipoMuestra::class);
     }
 }

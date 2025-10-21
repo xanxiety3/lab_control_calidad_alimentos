@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Muestra extends Model
 {
-     use HasFactory;
+    use HasFactory;
 
     protected $fillable = [
-        'solicitud_id', 'codigo_cliente', 'codigo_interno',
-        'tipo_muestra', 'cantidad', 'condiciones', 'estado'
+        'solicitud_id',
+        'codigo_cliente',
+        'codigo_interno',
+        'tipo_muestra_id',
+        'cantidad',
+        'condiciones',
+        'estado'
     ];
 
     public function solicitud()
@@ -29,5 +34,9 @@ class Muestra extends Model
     public function rechazos()
     {
         return $this->hasMany(RechazoMuestra::class);
+    }
+    public function tipoMuestra()
+    {
+        return $this->belongsTo(TipoMuestra::class);
     }
 }

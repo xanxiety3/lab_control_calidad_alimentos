@@ -20,6 +20,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+
+        $this->call(TipoMuestraSeeder::class);
+
         /* =========================
          *  1️⃣  CREAR ROLES
          * ========================= */
@@ -54,38 +57,85 @@ class DatabaseSeeder extends Seeder
         foreach ($permisos as $permiso) {
             Permission::firstOrCreate(['nombre' => $permiso['nombre']], $permiso);
         }
+        /* =========================
+ *  2️⃣  CREAR PERMISOS
+ * ========================= */
+        $permisos = [
+            // Usuarios
+            'ver_usuarios',
+            'crear_usuarios',
+            'editar_usuarios',
+            'eliminar_usuarios',
+
+            // Recepción
+            'crear_remision',
+            'ver_remisiones',
+            'editar_remisiones',
+            'eliminar_remisiones',
+
+
+            // Analista
+            'ver_muestras',
+            'registrar_resultado',
+            'editar_resultado',
+            'eliminar_resultado',
+
+            // Gestor técnico
+            'aprobar_muestra',
+            'rechazar_muestra',
+
+            // Consulta
+            'ver_informes',
+        ];
+
+        foreach ($permisos as $permiso) {
+            Permission::firstOrCreate(['nombre' => $permiso]);
+        }
 
         /* =========================
-         *  3️⃣  ASIGNAR PERMISOS A ROLES
-         * ========================= */
+ *  3️⃣  ASIGNAR PERMISOS A ROLES
+ * ========================= */
         $roleAdmin = Role::where('nombre', 'admin')->first();
         $roleRecepcion = Role::where('nombre', 'recepcion')->first();
         $roleAnalista = Role::where('nombre', 'analista')->first();
         $roleGestor = Role::where('nombre', 'gestor_tecnico')->first();
         $roleConsulta = Role::where('nombre', 'consulta')->first();
 
+        // 🔹 Admin tiene todos
         $permisosAll = Permission::pluck('id')->toArray();
-        $permisosRecepcion = Permission::whereIn('nombre', ['crear_solicitud', 'registrar_muestra'])->pluck('id')->toArray();
-        $permisosAnalista = Permission::whereIn('nombre', ['registrar_resultado'])->pluck('id')->toArray();
-        $permisosGestor = Permission::whereIn('nombre', ['aprobar_muestra', 'rechazar_muestra'])->pluck('id')->toArray();
-        $permisosConsulta = Permission::whereIn('nombre', ['ver_informes'])->pluck('id')->toArray();
-
-        // Sync relaciones (pivot role_permission)
         $roleAdmin->permissions()->sync($permisosAll);
-        $roleRecepcion->permissions()->sync($permisosRecepcion);
-        $roleAnalista->permissions()->sync($permisosAnalista);
-        $roleGestor->permissions()->sync($permisosGestor);
-        $roleConsulta->permissions()->sync($permisosConsulta);
+
+        // 🔹 Recepción
+        $roleRecepcion->permissions()->sync(
+            Permission::whereIn('nombre', ['crear_solicitud', 'registrar_muestra'])->pluck('id')
+        );
+
+        // 🔹 Analista
+        $roleAnalista->permissions()->sync(
+            Permission::where('nombre', 'registrar_resultado')->pluck('id')
+        );
+
+        // 🔹 Gestor técnico
+        $roleGestor->permissions()->sync(
+            Permission::whereIn('nombre', ['aprobar_muestra', 'rechazar_muestra'])->pluck('id')
+        );
+
+        // 🔹 Consulta
+        $roleConsulta->permissions()->sync(
+            Permission::where('nombre', 'ver_informes')->pluck('id')
+        );
+
 
         /* =========================
          *  4️⃣  CREAR USUARIO ADMIN
          * ========================= */
         $admin = User::firstOrCreate(
-            ['email' => 'admin@lcca.com'],
+            ['email' => 'lizcanoleidi@gmail.com'],
             [
                 'name' => 'Leidi Lizcano',
                 'password' => Hash::make('admin123'),
                 'role_id' => $roleAdmin->id,
+                'estado' => true,           
             ]
         );
 

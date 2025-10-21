@@ -16,7 +16,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role_id'
+        'role_id',
+        'estado',
     ];
 
     protected $hidden = [
@@ -24,19 +25,36 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    // Relación con Rol
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    // Verificar si el usuario tiene un permiso
-    public function hasPermission($permissionName)
+    public function permissions()
     {
-        return $this->role
-            ? $this->role->permissions()->where('nombre', $permissionName)->exists()
-            : false;
+        return $this->belongsToMany(Permission::class, 'permission_user');
     }
+
+
+    public function hasPermission(string $permisoNombre): bool
+    {
+        // Si el usuario es admin, tiene acceso a todo
+        if ($this->role && $this->role->nombre === 'admin') {
+            return true;
+        }
+
+        // Si el usuario no tiene rol asignado
+        if (! $this->role) {
+            return false;
+        }
+
+        // Buscar si el permiso está asociado al rol del usuario
+        return $this->role->permissions()
+            ->where('nombre', $permisoNombre)
+            ->exists();
+    }
+
+
     /**
      * Get the attributes that should be cast.
      *
@@ -45,7 +63,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

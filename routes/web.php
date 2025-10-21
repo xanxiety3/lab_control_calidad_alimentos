@@ -1,27 +1,73 @@
 <?php
 
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecepcionController;
+use App\Http\Controllers\RemisionController;
+use App\Http\Controllers\UserController;
+use App\Models\Ensayo;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+// 🧭 Dashboard general — cualquier usuario autenticado y verificado
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+
+// 🔐 Rutas protegidas por autenticación
 Route::middleware('auth')->group(function () {
+
+    // ⚙️ Perfil de usuario
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-
+    // 🧩 Dashboards según rol
     Route::get('/dashboard/admin', fn() => view('dashboard.admin'))->name('dashboard.admin');
-    Route::get('/dashboard/recepcion', fn() => view('dashboard.recepcion'))->name('dashboard.recepcion');
+    Route::get('/dashboard/recepcion', [RecepcionController::class, 'index'])->name('dashboard.recepcion');
     Route::get('/dashboard/analista', fn() => view('dashboard.analista'))->name('dashboard.analista');
     Route::get('/dashboard/gestor', fn() => view('dashboard.gestor'))->name('dashboard.gestor');
     Route::get('/dashboard/consulta', fn() => view('dashboard.consulta'))->name('dashboard.consulta');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | USUARIOS (solo Admin o quien tenga permiso "gestionar_usuarios")
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['permiso:gestionar_usuarios'])->group(function () {
+        Route::resource('usuarios', UserController::class)->except(['show']);
+        Route::patch('usuarios/{usuario}/estado', [UserController::class, 'cambiarEstado'])
+            ->name('usuarios.estado');
+    });
+
+
+    // Ejemplo: solo quien tenga permiso registrar_remisiones
+    Route::middleware(['auth', 'permiso:crear_solicitud'])->group(function () {
+        Route::get('/remisiones/create', [RemisionController::class, 'create'])->name('remisiones.create');
+        Route::post('/remisiones', [RemisionController::class, 'store'])->name('remisiones.store');
+
+        Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+        
+        Route::get('/api/municipios/{departamento}', [ClienteController::class, 'porDepartamento']);
+
+
+        Route::get('/ensayos/{tipoMuestraId}', function ($id) {
+            return Ensayo::where('tipo_muestra_id', $id)
+                ->where('activo', true)
+                ->get(['id', 'nombre']);
+        });
+    });
+
+
+    // Ejemplo: solo quien tenga permiso ver_resultados
+    Route::middleware(['permiso:ver_resultados'])->group(function () {
+        // Route::get('resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+    });
 });
 
 require __DIR__ . '/auth.php';

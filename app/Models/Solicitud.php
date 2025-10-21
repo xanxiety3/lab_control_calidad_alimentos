@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Solicitud extends Model
 {
+    protected $table = 'solicitudes';
     use HasFactory;
 
     protected $fillable = [
