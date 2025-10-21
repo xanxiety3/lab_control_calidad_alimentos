@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/remisiones', [RemisionController::class, 'store'])->name('remisiones.store');
 
         Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
-        
+
         Route::get('/api/municipios/{departamento}', [ClienteController::class, 'porDepartamento']);
 
 
@@ -61,6 +61,9 @@ Route::middleware('auth')->group(function () {
                 ->where('activo', true)
                 ->get(['id', 'nombre']);
         });
+
+        Route::get('/solicitudes/{id}/descargar', [RemisionController::class, 'exportar'])
+            ->name('solicitudes.exportar');
     });
 
 

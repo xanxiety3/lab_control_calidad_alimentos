@@ -72,7 +72,8 @@
                         @forelse($solicitudes ?? [] as $solicitud)
                             <tr class="border-b hover:bg-gray-50">
                                 <td class="px-4 py-3 text-gray-800 font-medium">{{ $solicitud->id }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $solicitud->cliente->persona->nombre_completo ?? '—' }}</td>
+                                <td class="px-4 py-3 text-gray-700">
+                                    {{ $solicitud->cliente->persona->nombre_completo ?? '—' }}</td>
                                 <td class="px-4 py-3 text-gray-600">
                                     {{ $solicitud->created_at->format('d/m/Y') }}
                                 </td>
@@ -94,9 +95,20 @@
                                     @endforeach
                                 </td>
 
-                                <td class="px-4 py-3">
-                                    <a href="#" class="text-primary hover:underline">Ver</a>
+                                <td class="px-4 py-3 flex space-x-3">
+                                    <!-- Ver -->
+                                    <a 
+                                        class="text-blue-600 hover:underline font-semibold flex items-center">
+                                        <x-heroicon-o-eye class="h-4 w-4 mr-1" /> Ver
+                                    </a>
+
+                                    <!-- Descargar -->
+                                    <a href="{{ route('solicitudes.exportar', $solicitud->id) }}"
+                                        class="text-green-600 hover:underline font-semibold flex items-center">
+                                        <x-heroicon-o-arrow-down-tray class="h-4 w-4 mr-1" /> Descargar
+                                    </a>
                                 </td>
+
                             </tr>
                         @empty
                             <tr>

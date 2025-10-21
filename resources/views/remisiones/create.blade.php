@@ -115,7 +115,8 @@
                             <label for="cantidad" class="block text-sm font-medium text-gray-700">
                                 Cantidad (masa o volumen)
                             </label>
-                            <input type="text" id="cantidad" name="muestras[0][cantidad]" placeholder="Ej: 250 ml, 2 g, 1 L..."
+                            <input type="text" id="cantidad" name="muestras[0][cantidad]"
+                                placeholder="Ej: 250 ml, 2 g, 1 L..."
                                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50" />
                         </div>
 
@@ -143,6 +144,12 @@
             <button type="button" id="addMuestra"
                 class="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Agregar Muestra</button>
 
+            <div class="mt-4">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="accept_terms" v-model="form.accept_terms" class="w-4 h-4 text-primary">
+                    <span>El cliente acepta todos los términos y condiciones del laboratorio.</span>
+                </label>
+            </div>
 
             {{-- Botón enviar --}}
             <div class="flex justify-end mt-8">
@@ -279,6 +286,20 @@
     </div>
 
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const formRemision = document.querySelector('form[action="{{ route('remisiones.store') }}"]');
+    const checkTerms = document.getElementById('accept_terms');
+
+    formRemision.addEventListener('submit', function (e) {
+        if (!checkTerms.checked) {
+            e.preventDefault(); // Evita el envío
+            alert('⚠️ Debes aceptar los términos y condiciones antes de guardar la remisión.');
+            return false;
+        }
+    });
+});
+</script>
 
 
 
@@ -286,6 +307,8 @@
 </x-app-layout>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+      
+
         // Inicializar Select2
         $('#cliente_id').select2({
             placeholder: "Seleccione o escriba un cliente",

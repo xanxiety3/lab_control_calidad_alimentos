@@ -18,6 +18,7 @@ class Muestra extends Model
         'condiciones',
         'estado'
     ];
+    
 
     public function solicitud()
     {
