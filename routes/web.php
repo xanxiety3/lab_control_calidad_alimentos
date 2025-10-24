@@ -4,6 +4,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\RemisionController;
+use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\UserController;
 use App\Models\Ensayo;
 use Illuminate\Support\Facades\Route;
@@ -51,10 +52,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/remisiones/create', [RemisionController::class, 'create'])->name('remisiones.create');
         Route::post('/remisiones', [RemisionController::class, 'store'])->name('remisiones.store');
 
-        Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
-
         Route::get('/api/municipios/{departamento}', [ClienteController::class, 'porDepartamento']);
 
+        Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+        Route::get('/clientes/create', [ClienteController::class, 'create'])->name('clientes.create');
+
+        Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+        Route::get('/clientes/{id}/editar', [ClienteController::class, 'edit'])->name('clientes.edit');
+        Route::put('/clientes/{id}', [ClienteController::class, 'update'])->name('clientes.update');
 
         Route::get('/ensayos/{tipoMuestraId}', function ($id) {
             return Ensayo::where('tipo_muestra_id', $id)
@@ -62,8 +67,13 @@ Route::middleware('auth')->group(function () {
                 ->get(['id', 'nombre']);
         });
 
+
         Route::get('/solicitudes/{id}/descargar', [RemisionController::class, 'exportar'])
             ->name('solicitudes.exportar');
+
+        Route::get('/recepcion/{id}', [RecepcionController::class, 'show'])->name('recepcion.show');
+
+        Route::get('/reportes', [ReportesController::class, 'index'])->name('reportes');
     });
 
 

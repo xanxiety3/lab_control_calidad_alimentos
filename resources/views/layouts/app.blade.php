@@ -57,7 +57,7 @@
 
                         {{-- 👥 Clientes (visible para recepción y gestor técnico) --}}
                         @permiso('registrar_muestra')
-                            <a href="#" class="hover:text-secondary flex items-center space-x-1">
+                            <a href="{{ route('clientes.index') }}" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-users class="w-5 h-5" />
                                 <span>Clientes</span>
                             </a>
@@ -74,7 +74,7 @@
 
                         {{-- 📊 Informes (solo consulta) --}}
                         @permiso('ver_informes')
-                            <a href="#" class="hover:text-secondary flex items-center space-x-1">
+                            <a href="{{ route('reportes') }}" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-chart-bar class="w-5 h-5" />
                                 <span>Informes</span>
                             </a>

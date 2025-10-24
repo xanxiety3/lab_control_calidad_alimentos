@@ -26,4 +26,17 @@ class RecepcionController extends Controller
 
         return view('dashboard.recepcion', compact('totalSolicitudes', 'pendientes', 'enProceso', 'solicitudes'));
     }
+
+
+    public function show($id)
+    {
+        $solicitud = Solicitud::with([
+            'cliente.persona',          // relación con cliente
+            'muestras.tipoMuestra',     // tipo de muestra
+            'muestras',
+            'muestras.ensayos', // técnicas si existen
+        ])->findOrFail($id);
+
+        return view('remisiones.show', compact('solicitud'));
+    }
 }

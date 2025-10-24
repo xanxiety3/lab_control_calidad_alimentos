@@ -97,7 +97,7 @@
 
                                 <td class="px-4 py-3 flex space-x-3">
                                     <!-- Ver -->
-                                    <a 
+                                    <a href="{{ route('recepcion.show', $solicitud->id) }}"
                                         class="text-blue-600 hover:underline font-semibold flex items-center">
                                         <x-heroicon-o-eye class="h-4 w-4 mr-1" /> Ver
                                     </a>

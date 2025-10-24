@@ -160,14 +160,26 @@
             </div>
         </form>
         <!-- Modal Crear Cliente -->
+        <!-- Modal Crear Cliente -->
         <div id="modalCliente"
-            class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            class="{{ $errors->any() ? '' : 'hidden' }} fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Registrar nuevo cliente</h2>
 
-                <form id="formCliente" action="{{ route('clientes.store') }}" method="POST"class="space-y-4">
-
+                <form id="formCliente" action="{{ route('clientes.store') }}" method="POST" class="space-y-4">
                     @csrf
+
+                    {{-- Mostrar errores --}}
+                    @if ($errors->any())
+                        <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
+                            <strong class="font-bold">¡Ups! Hay errores:</strong>
+                            <ul class="list-disc list-inside text-sm mt-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-2 gap-4">
                         <!-- Tipo de persona -->
@@ -176,8 +188,10 @@
                             <select name="tipo_persona" id="tipo_persona"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                                 <option value="">Seleccione</option>
-                                <option value="natural">Natural</option>
-                                <option value="juridica">Jurídica</option>
+                                <option value="natural" {{ old('tipo_persona') == 'natural' ? 'selected' : '' }}>Natural
+                                </option>
+                                <option value="juridica" {{ old('tipo_persona') == 'juridica' ? 'selected' : '' }}>
+                                    Jurídica</option>
                             </select>
                         </div>
 
@@ -186,8 +200,10 @@
                             <label class="text-sm text-gray-600">Tipo de cliente</label>
                             <select name="tipo_cliente"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
-                                <option value="externo">Externo</option>
-                                <option value="interno">Interno</option>
+                                <option value="externo" {{ old('tipo_cliente') == 'externo' ? 'selected' : '' }}>Externo
+                                </option>
+                                <option value="interno" {{ old('tipo_cliente') == 'interno' ? 'selected' : '' }}>Interno
+                                </option>
                             </select>
                         </div>
 
@@ -204,32 +220,35 @@
                         <div>
                             <label class="text-sm text-gray-600">Número de documento</label>
                             <input type="text" name="numero_documento" id="numero_documento"
+                                value="{{ old('numero_documento') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
 
                         <!-- Nombre completo o razón social -->
-                        <div id="campoNombreNatural" class="col-span-2">
+                        <div id="campoNombreNatural"
+                            class="{{ old('tipo_persona') == 'juridica' ? 'hidden' : '' }} col-span-2">
                             <label class="text-sm text-gray-600">Nombre completo</label>
-                            <input type="text" name="nombre_completo"
+                            <input type="text" name="nombre_completo" value="{{ old('nombre_completo') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
 
-                        <div id="campoRazonSocial" class="col-span-2 hidden">
+                        <div id="campoRazonSocial"
+                            class="{{ old('tipo_persona') == 'natural' || !old('tipo_persona') ? 'hidden' : '' }} col-span-2">
                             <label class="text-sm text-gray-600">Razón social</label>
-                            <input type="text" name="razon_social"
+                            <input type="text" name="razon_social" value="{{ old('razon_social') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
 
                         <!-- Contacto -->
                         <div>
                             <label class="text-sm text-gray-600">Correo electrónico</label>
-                            <input type="email" name="correo_electronico"
+                            <input type="email" name="correo_electronico" value="{{ old('correo_electronico') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
 
                         <div>
                             <label class="text-sm text-gray-600">Teléfono</label>
-                            <input type="text" name="telefono"
+                            <input type="text" name="telefono" value="{{ old('telefono') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
 
@@ -240,7 +259,9 @@
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                                 <option value="">Seleccione</option>
                                 @foreach ($departamentos as $dpto)
-                                    <option value="{{ $dpto->id }}">{{ $dpto->nombre }}</option>
+                                    <option value="{{ $dpto->id }}"
+                                        {{ old('departamento_id') == $dpto->id ? 'selected' : '' }}>{{ $dpto->nombre }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -253,10 +274,9 @@
                             </select>
                         </div>
 
-
                         <div class="col-span-2">
                             <label class="text-sm text-gray-600">Dirección</label>
-                            <input type="text" name="direccion"
+                            <input type="text" name="direccion" value="{{ old('direccion') }}"
                                 class="w-full border-gray-300 rounded-md focus:ring-primary focus:border-primary">
                         </div>
                     </div>
@@ -268,46 +288,40 @@
                         <button type="submit"
                             class="px-3 py-2 rounded-md bg-primary text-white hover:bg-blue-800">Guardar</button>
                     </div>
-                    @if ($errors->any())
-                        <div class="bg-red-100 text-red-800 px-4 py-2 rounded mb-4">
-                            <ul class="list-disc list-inside text-sm">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                 </form>
             </div>
         </div>
 
+    
 
     </div>
 
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const formRemision = document.querySelector('form[action="{{ route('remisiones.store') }}"]');
-    const checkTerms = document.getElementById('accept_terms');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const formRemision = document.querySelector('form[action="{{ route('remisiones.store') }}"]');
+            const checkTerms = document.getElementById('accept_terms');
 
-    formRemision.addEventListener('submit', function (e) {
-        if (!checkTerms.checked) {
-            e.preventDefault(); // Evita el envío
-            alert('⚠️ Debes aceptar los términos y condiciones antes de guardar la remisión.');
-            return false;
-        }
-    });
-});
-</script>
+            formRemision.addEventListener('submit', function(e) {
+                if (!checkTerms.checked) {
+                    e.preventDefault(); // Evita el envío
+                    alert('⚠️ Debes aceptar los términos y condiciones antes de guardar la remisión.');
+                    return false;
+                }
+            });
+        });
+    </script>
 
 
 
 
 </x-app-layout>
+
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-      
+
 
         // Inicializar Select2
         $('#cliente_id').select2({
@@ -316,55 +330,6 @@ document.addEventListener('DOMContentLoaded', function () {
             width: '100%'
         });
 
-        // Modal nuevo cliente
-        const modal = document.getElementById('modalCliente');
-        const btnNuevo = document.getElementById('btnNuevoCliente');
-        const form = document.getElementById('formCliente');
-        const selectCliente = $('#cliente_id');
-
-        btnNuevo.addEventListener('click', () => modal.classList.remove('hidden'));
-        document.getElementById('cancelarCliente').addEventListener('click', () => modal.classList.add(
-            'hidden'));
-
-        // Enviar nuevo cliente por AJAX
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                            .content
-                    },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const cliente = await response.json();
-
-                    // Agregar al Select2 y seleccionarlo
-                    const newOption = new Option(cliente.nombre, cliente.id, true, true);
-                    selectCliente.append(newOption).trigger('change');
-
-                    modal.classList.add('hidden');
-                    form.reset();
-                } else if (response.status === 422) {
-                    const errors = await response.json();
-                    let mensaje = '';
-                    for (let field in errors.errors) {
-                        mensaje += `${errors.errors[field].join(', ')}\n`;
-                    }
-                    alert(mensaje);
-                } else {
-                    alert('Error al crear el cliente.');
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Error al enviar la solicitud.');
-            }
-        });
     });
 </script>
 
@@ -534,12 +499,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnNuevo = document.getElementById('btnNuevoCliente');
         const cancelar = document.getElementById('cancelarCliente');
         const form = document.getElementById('formCliente');
-        const selectCliente = document.getElementById('cliente_id');
 
-        if (!form) return; // evita errores si el form no existe
+        // Abrir modal
+        btnNuevo.addEventListener('click', () => modal.classList.remove('hidden'));
 
-        // Mostrar modal según tipo de persona
-        document.getElementById('tipo_persona').addEventListener('change', function() {
+        // Cerrar modal
+        cancelar.addEventListener('click', () => modal.classList.add('hidden'));
+
+        // Mostrar campos según tipo de persona
+        const tipoPersona = document.getElementById('tipo_persona');
+        tipoPersona.addEventListener('change', function() {
             const natural = document.getElementById('campoNombreNatural');
             const juridica = document.getElementById('campoRazonSocial');
             if (this.value === 'natural') {
@@ -552,92 +521,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 natural.classList.add('hidden');
                 juridica.classList.add('hidden');
             }
-        });
 
-        // Actualizar tipo de documento según tipo de persona
-        const tipoPersona = document.getElementById('tipo_persona');
-        const tipoDocumento = document.getElementById('tipo_documento');
-
-        const opciones = {
-            natural: [{
-                    value: 'cc',
-                    text: 'Cédula de ciudadanía'
-                },
-                {
-                    value: 'ce',
-                    text: 'Cédula de extranjería'
-                },
-                {
-                    value: 'pe',
-                    text: 'Permiso especial de permanencia'
-                }
-            ],
-            juridica: [{
-                value: 'nit',
-                text: 'NIT'
-            }]
-        };
-
-        tipoPersona.addEventListener('change', function() {
-            const seleccion = this.value;
+            // Actualizar tipo de documento
+            const tipoDocumento = document.getElementById('tipo_documento');
+            const opciones = {
+                natural: [{
+                        value: 'cc',
+                        text: 'Cédula de ciudadanía'
+                    },
+                    {
+                        value: 'ce',
+                        text: 'Cédula de extranjería'
+                    },
+                    {
+                        value: 'pe',
+                        text: 'Permiso especial de permanencia'
+                    }
+                ],
+                juridica: [{
+                    value: 'nit',
+                    text: 'NIT'
+                }]
+            };
             tipoDocumento.innerHTML = '';
-            if (!seleccion) {
+            if (opciones[this.value]) {
+                opciones[this.value].forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    tipoDocumento.appendChild(option);
+                });
+            } else {
                 tipoDocumento.innerHTML =
                     '<option value="">Seleccione tipo de persona primero</option>';
-                return;
-            }
-            opciones[seleccion].forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt.value;
-                option.textContent = opt.text;
-                tipoDocumento.appendChild(option);
-            });
-        });
-
-        // Botones modal
-        btnNuevo.addEventListener('click', () => modal.classList.remove('hidden'));
-        cancelar.addEventListener('click', () => modal.classList.add('hidden'));
-
-        // --- ENVÍO AJAX ---
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                            .content
-                    },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    const cliente = await response.json();
-                    const option = new Option(cliente.nombre, cliente.id, true, true);
-                    selectCliente.appendChild(option);
-                    selectCliente.value = cliente.id;
-
-                    modal.classList.add('hidden');
-                    form.reset();
-                } else if (response.status === 422) {
-                    const errors = await response.json();
-                    let mensaje = '';
-                    for (let field in errors.errors) {
-                        mensaje += `${errors.errors[field].join(', ')}\n`;
-                    }
-                    alert(mensaje);
-                } else {
-                    alert('Error al crear el cliente.');
-                    console.error(await response.text());
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Error al enviar la solicitud.');
             }
         });
-
     });
 </script>
