@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\RemisionController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\ResultadoController;
 use App\Http\Controllers\UserController;
 use App\Models\Ensayo;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
 
 // 🧭 Dashboard general — cualquier usuario autenticado y verificado
 Route::get('/dashboard', function () {
@@ -30,7 +32,7 @@ Route::middleware('auth')->group(function () {
     // 🧩 Dashboards según rol
     Route::get('/dashboard/admin', fn() => view('dashboard.admin'))->name('dashboard.admin');
     Route::get('/dashboard/recepcion', [RecepcionController::class, 'index'])->name('dashboard.recepcion');
-    Route::get('/dashboard/analista', fn() => view('dashboard.analista'))->name('dashboard.analista');
+    Route::get('/dashboard/analista', [ResultadoController::class, 'index'])->name('dashboard.analista');
     Route::get('/dashboard/gestor', fn() => view('dashboard.gestor'))->name('dashboard.gestor');
     Route::get('/dashboard/consulta', fn() => view('dashboard.consulta'))->name('dashboard.consulta');
 
@@ -78,8 +80,21 @@ Route::middleware('auth')->group(function () {
 
 
     // Ejemplo: solo quien tenga permiso ver_resultados
-    Route::middleware(['permiso:ver_resultados'])->group(function () {
-        // Route::get('resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+    Route::middleware(['permiso:registrar_resultados'])->group(function () {
+        Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+
+        Route::get('/resultados/exportar/{id}', [ResultadoController::class, 'exportar'])
+            ->name('resultados.exportar');
+            
+        Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
+            ->name('resultados.enviarCorreo');
+
+
+        Route::get('/resultados/{solicitud}/edit', [ResultadoController::class, 'edit'])
+            ->name('resultados.edit');
+
+        Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
+            ->name('resultados.update');
     });
 });
 

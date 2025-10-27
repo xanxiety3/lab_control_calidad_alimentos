@@ -18,7 +18,7 @@ class Muestra extends Model
         'condiciones',
         'estado'
     ];
-    
+
 
     public function solicitud()
     {
@@ -28,10 +28,9 @@ class Muestra extends Model
     public function ensayos()
     {
         return $this->belongsToMany(Ensayo::class, 'muestra_ensayo')
-            ->withPivot('observaciones')
+            ->withPivot(['observaciones', 'fecha_analisis', 'resultado', 'unidad_medida', 'codigo_trazabilidad'])
             ->withTimestamps();
     }
-
     public function rechazos()
     {
         return $this->hasMany(RechazoMuestra::class);

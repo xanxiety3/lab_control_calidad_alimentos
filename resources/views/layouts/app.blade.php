@@ -51,7 +51,7 @@
                         @permiso('registrar_resultado')
                             <a href="#" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-beaker class="w-5 h-5" />
-                                <span>Ensayos</span>
+                                <span>Registrar resultados</span>
                             </a>
                         @endpermiso
 

@@ -18,11 +18,10 @@ class Ensayo extends Model
         'activo'
     ];
 
-
     public function muestras()
     {
         return $this->belongsToMany(Muestra::class, 'muestra_ensayo')
-            ->withPivot('observaciones')
+            ->withPivot(['observaciones', 'fecha_analisis', 'resultado', 'unidad_medida', 'codigo_trazabilidad'])
             ->withTimestamps();
     }
     public function tipoMuestra()
