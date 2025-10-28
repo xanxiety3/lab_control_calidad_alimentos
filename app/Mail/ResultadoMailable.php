@@ -21,7 +21,7 @@ class ResultadoMailable extends Mailable
     public function build()
     {
         $correo = $this->subject('Resultados – Solicitud ' . $this->solicitud->numero_solicitud)
-            ->view('emails.resultados');
+            ->view('resultados.email');
 
         if (is_string($this->archivo) && file_exists($this->archivo)) {
             $correo->attach($this->archivo, [

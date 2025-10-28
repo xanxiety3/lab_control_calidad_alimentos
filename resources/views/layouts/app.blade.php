@@ -33,7 +33,7 @@
                     <div class="hidden md:flex space-x-6 text-sm">
                         {{-- 🏠 Inicio --}}
                         <a href="{{ rutaDashboardPorRol() }}"
-                            class="hover:text-secondary flex items-center space-x-1 {{ request()->routeIs('dashboard.*') ? 'text-secondary font-semibold' : '' }}">
+                             class="hover:text-secondary flex items-center space-x-1 {{ request()->routeIs('dashboard.*') }}">
                             <x-heroicon-o-home class="w-5 h-5" />
                             <span>Inicio</span>
                         </a>
@@ -49,7 +49,7 @@
 
                         {{-- 🧪 Ensayos (solo analista) --}}
                         @permiso('registrar_resultado')
-                            <a href="#" class="hover:text-secondary flex items-center space-x-1">
+                            <a href="{{ route('resultados.index') }}" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-beaker class="w-5 h-5" />
                                 <span>Registrar resultados</span>
                             </a>

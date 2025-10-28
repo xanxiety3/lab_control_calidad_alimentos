@@ -97,31 +97,19 @@
                                     @endif
                                 </td>
 
-                                {{-- 🎯 Acciones --}}
-                                <td class="p-3 text-center space-x-2">
+                                {{-- 🎯 Acciones (solo registrar resultados) --}}
+                                <td class="p-3 text-center">
                                     @if ($solicitud->estado_global !== 'finalizada')
                                         <a href="{{ route('resultados.edit', $solicitud->muestras->first()->id) }}"
                                             class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg shadow-sm transition-all">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
-                                            Registrar
+                                            Registrar resultados
                                         </a>
                                     @else
-                                        <a href="{{ route('resultados.exportar', ['id' => $solicitud->id]) }}"
-                                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded-lg shadow-sm transition-all">
-                                            <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                                            Descargar
-                                        </a>
-
-                                        @if (in_array($solicitud->entrega_resultados, ['correo', 'ambos']))
-                                            <a href="{{ route('resultados.enviarCorreo', $solicitud->id) }}"
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs rounded-lg shadow-sm transition-all">
-                                                <x-heroicon-o-envelope class="w-4 h-4" />
-                                                Enviar correo
-                                            </a>
-                                        @endif
+                                        <span
+                                            class="text-gray-400 text-xs italic">Resultados finalizados</span>
                                     @endif
                                 </td>
-
                             </tr>
                         @empty
                             <tr>

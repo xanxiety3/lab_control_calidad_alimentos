@@ -31,7 +31,7 @@ class RemisionController extends Controller
             'entrega_resultados' => 'required|in:correo,personal,ambos',
             'muestras' => 'required|array|min:1',
             'muestras.*.tipo_muestra_id' => 'required|exists:tipo_muestras,id',
-            'muestras.*.cantidad' => 'required',
+            'muestras.*.cantidad' => 'required|string|max:100',
             'muestras.*.ensayos' => 'required|array|min:1',
         ]);
 
@@ -72,11 +72,23 @@ class RemisionController extends Controller
                 'estado' => 'pendiente',
             ]);
 
-            $muestra->ensayos()->sync($muestraData['ensayos']);
+            // ✅ Aplicar misma cantidad a todos los ensayos seleccionados
+            $pivotData = [];
+            foreach ($muestraData['ensayos'] as $ensayoId) {
+                $pivotData[$ensayoId] = [
+                  
+                    'observaciones' => $muestraData['condiciones'] ?? null,
+                ];
+            }
+
+            $muestra->ensayos()->sync($pivotData);
         }
 
-        return redirect()->route('dashboard.recepcion')->with('success', 'Remisión creada correctamente.');
+        return redirect()
+            ->route('dashboard.recepcion')
+            ->with('success', 'Remisión creada correctamente.');
     }
+
 
 
 
@@ -252,11 +264,11 @@ class RemisionController extends Controller
 
 
         $sheet->setCellValue('L42', 'X');
-        
+
         $sheet->setCellValue('L43', 'X');
-        
+
         $sheet->setCellValue('L44', 'X');
-    
+
 
 
         // 📤 Generar descarga directa sin guardar en disco

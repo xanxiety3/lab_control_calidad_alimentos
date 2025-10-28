@@ -39,4 +39,32 @@ class RecepcionController extends Controller
 
         return view('remisiones.show', compact('solicitud'));
     }
+
+     public function gestorFinalizadas()
+    {
+        $solicitudes = Solicitud::with([
+            'cliente.persona',
+            'muestras'
+        ])->orderByDesc('created_at')->get();
+
+        // Calcular estado global
+        foreach ($solicitudes as $solicitud) {
+            $total = $solicitud->muestras->count();
+            $pendientes = $solicitud->muestras->where('estado', 'pendiente')->count();
+            $finalizadas = $solicitud->muestras->where('estado', 'finalizada')->count();
+
+            if ($pendientes === $total) {
+                $solicitud->estado_global = 'pendiente';
+            } elseif ($finalizadas === $total) {
+                $solicitud->estado_global = 'finalizada';
+            } else {
+                $solicitud->estado_global = 'en_proceso';
+            }
+        }
+
+        // Filtrar solo las finalizadas
+        $solicitudes = $solicitudes->where('estado_global', 'finalizada');
+
+        return view('dashboard.gestor', compact('solicitudes'));
+    }
 }

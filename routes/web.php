@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/admin', fn() => view('dashboard.admin'))->name('dashboard.admin');
     Route::get('/dashboard/recepcion', [RecepcionController::class, 'index'])->name('dashboard.recepcion');
     Route::get('/dashboard/analista', [ResultadoController::class, 'index'])->name('dashboard.analista');
-    Route::get('/dashboard/gestor', fn() => view('dashboard.gestor'))->name('dashboard.gestor');
+    Route::get('/dashboard/gestor', [RecepcionController::class, 'gestorFinalizadas'])->name('dashboard.gestor');
     Route::get('/dashboard/consulta', fn() => view('dashboard.consulta'))->name('dashboard.consulta');
 
 
@@ -85,7 +85,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/resultados/exportar/{id}', [ResultadoController::class, 'exportar'])
             ->name('resultados.exportar');
-            
+
         Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
             ->name('resultados.enviarCorreo');
 
