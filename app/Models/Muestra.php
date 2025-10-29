@@ -31,6 +31,12 @@ class Muestra extends Model
             ->withPivot(['observaciones', 'fecha_analisis', 'resultado', 'unidad_medida', 'codigo_trazabilidad'])
             ->withTimestamps();
     }
+    public function muestraEnsayos()
+    {
+        return $this->hasMany(MuestraEnsayo::class);
+    }
+
+
     public function rechazos()
     {
         return $this->hasMany(RechazoMuestra::class);
@@ -38,5 +44,41 @@ class Muestra extends Model
     public function tipoMuestra()
     {
         return $this->belongsTo(TipoMuestra::class);
+    }
+
+
+
+    /**
+     * Calcular el estado de la muestra basado en sus ensayos
+     */
+    public function calcularEstado(): string
+    {
+        $ensayos = $this->muestraEnsayos;
+
+        if ($ensayos->isEmpty()) {
+            return 'pendiente';
+        }
+
+        $totalEnsayos = $ensayos->count();
+        $ensayosCompletados = $ensayos->whereNotNull('resultado')
+            ->where('resultado', '!=', '')
+            ->where('resultado', '!=', 0)
+            ->count();
+
+        if ($ensayosCompletados === 0) {
+            return 'pendiente';
+        } elseif ($ensayosCompletados === $totalEnsayos) {
+            return 'finalizada';
+        } else {
+            return 'en_proceso';
+        }
+    }
+
+    /**
+     * Accessor para estado (calculado en tiempo real)
+     */
+    public function getEstadoAttribute(): string
+    {
+        return $this->calcularEstado();
     }
 }

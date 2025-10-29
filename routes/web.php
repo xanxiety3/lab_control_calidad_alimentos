@@ -90,8 +90,9 @@ Route::middleware('auth')->group(function () {
             ->name('resultados.enviarCorreo');
 
 
-        Route::get('/resultados/{solicitud}/edit', [ResultadoController::class, 'edit'])
-            ->name('resultados.edit');
+        // Registrar resultados
+        Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
+
 
         Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
             ->name('resultados.update');
