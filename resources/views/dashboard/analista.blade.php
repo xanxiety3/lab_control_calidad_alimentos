@@ -28,14 +28,16 @@
 
                     <button onclick="filtrar('finalizada')"
                         class="estado-btn bg-emerald-50/50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/50 px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1">
-                        Finalizadas <span class="ml-1 font-bold text-emerald-800">({{ $contadores['finalizada'] }})</span>
+                        Finalizadas <span
+                            class="ml-1 font-bold text-emerald-800">({{ $contadores['finalizada'] }})</span>
                     </button>
                 </div>
             </div>
 
             {{-- ✅ Mensaje de éxito --}}
             @if (session('success'))
-                <div class="bg-emerald-50/80 border-l-4 border-secondary text-emerald-800 px-5 py-3 rounded-lg mb-6 flex items-center gap-3 shadow-sm transform transition-all hover:scale-[1.01]">
+                <div
+                    class="bg-emerald-50/80 border-l-4 border-secondary text-emerald-800 px-5 py-3 rounded-lg mb-6 flex items-center gap-3 shadow-sm transform transition-all hover:scale-[1.01]">
                     <x-heroicon-o-check-circle class="w-6 h-6 text-secondary" />
                     <span class="font-medium">{{ session('success') }}</span>
                 </div>
@@ -58,7 +60,8 @@
 
                     <tbody class="divide-y divide-gray-100/50">
                         @foreach ($solicitudes as $solicitud)
-                            <tr class="solicitud-row hover:bg-primary/5 transition-all duration-200" data-estado="{{ $solicitud->estado_global }}">
+                            <tr class="solicitud-row hover:bg-primary/5 transition-all duration-200"
+                                data-estado="{{ $solicitud->estado_global }}">
                                 <td class="p-4 font-semibold text-primary">
                                     {{ $solicitud->numero_solicitud }}
                                 </td>
@@ -86,10 +89,12 @@
                                             'en_proceso' => ['color' => 'secondary', 'texto' => 'En proceso'],
                                             'finalizada' => ['color' => 'emerald', 'texto' => 'Finalizada'],
                                         ];
-                                        $config = $estadoConfig[$solicitud->estado_global] ?? $estadoConfig['pendiente'];
+                                        $config =
+                                            $estadoConfig[$solicitud->estado_global] ?? $estadoConfig['pendiente'];
                                     @endphp
 
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-{{ $config['color'] }}-100 text-{{ $config['color'] }}-800 shadow-sm">
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-{{ $config['color'] }}-100 text-{{ $config['color'] }}-800 shadow-sm">
                                         @if ($solicitud->estado_global === 'pendiente')
                                             <x-heroicon-o-clock class="w-4 h-4" />
                                         @elseif($solicitud->estado_global === 'en_proceso')
@@ -118,10 +123,15 @@
                                             <span class="text-gray-400 text-xs italic">Sin muestras</span>
                                         @endif
                                     @else
-                                        <a href="#"
+                                        <a href="{{ route('resultados.show', $solicitud->id) }}"
                                             class="inline-flex items-center gap-1 px-4 py-2 bg-secondary hover:bg-secondary/90 text-white text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all">
                                             <x-heroicon-o-eye class="w-4 h-4" />
                                             Ver resultados
+                                        </a>
+                                        <a href="{{ route('resultados.exportar.simple', $solicitud->id) }}"
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg shadow-sm transition-all">
+                                            <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                                            Excel
                                         </a>
                                     @endif
                                 </td>
@@ -137,7 +147,7 @@
     <script>
         function filtrar(estado) {
             const rows = document.querySelectorAll('tr.solicitud-row');
-            
+
             rows.forEach(row => {
                 if (estado === 'todas' || row.getAttribute('data-estado') === estado) {
                     row.style.display = '';
@@ -149,10 +159,10 @@
             document.querySelectorAll('.estado-btn').forEach(btn => {
                 btn.classList.remove('ring-2', 'ring-offset-1', 'ring-primary');
             });
-            
+
             const botones = document.querySelectorAll('.estado-btn');
             botones.forEach(boton => {
-                if (boton.textContent.includes(estado.charAt(0).toUpperCase() + estado.slice(1)) || 
+                if (boton.textContent.includes(estado.charAt(0).toUpperCase() + estado.slice(1)) ||
                     (estado === 'todas' && boton.textContent.includes('Todas'))) {
                     boton.classList.add('ring-2', 'ring-offset-1', 'ring-primary');
                 }

@@ -54,9 +54,18 @@ class ResultadoController extends Controller
 
 
 
+    public function show($id)
+    {
+        $solicitud = Solicitud::with([
+            'cliente.persona',
+            'muestras.tipoMuestra',
+            'muestras.muestraEnsayos.ensayo',
+            'muestras.muestraEnsayos.microbiologia',
+            'muestras.muestraEnsayos.fisicoquimico'
+        ])->findOrFail($id);
 
-
-
+        return view('resultados.show', compact('solicitud'));
+    }
 
 
 
@@ -454,10 +463,10 @@ class ResultadoController extends Controller
 
             // 🧩 Seleccionar plantilla
             if (str_contains($tipo, 'leche')) {
-                $template = 'formato_leche.xlsx';
+                $template = 'formato_leche-final.xlsx';
                 $filaResultados = 22;
             } elseif (str_contains($tipo, 'queso')) {
-                $template = 'formato_queso.xlsx';
+                $template = 'formato_queso-final.xlsx';
                 $filaResultados = 22;
             } else {
                 continue;
@@ -893,4 +902,362 @@ class ResultadoController extends Controller
 
         return back()->with('success', '📨 Resultados enviados correctamente a ' . $correoCliente);
     }
+
+
+    // public function exportarDatos($id)
+    // {
+    //     $solicitud = Solicitud::with([
+    //         'cliente.persona',
+    //         'muestras.tipoMuestra',
+    //         'muestras.ensayos'
+    //     ])->findOrFail($id);
+
+    //     if ($solicitud->muestras->isEmpty()) {
+    //         return back()->with('error', 'No hay muestras registradas para esta solicitud.');
+    //     }
+
+    //     $archivosGenerados = [];
+
+    //     foreach ($solicitud->muestras as $muestra) {
+    //         $tipo = strtolower($muestra->tipoMuestra->nombre ?? '');
+    //         $tipoMuestraId = $muestra->tipo_muestra_id;
+
+    //         // Seleccionar plantilla
+    //         if (str_contains($tipo, 'leche')) {
+    //             $template = 'datos-leche.xlsx';
+    //             $filaDatos = 11;
+    //             $mapaColumnas = [
+    //                 'aerobios' => 'F',
+    //                 'grasa' => 'G',
+    //                 'solidos totales' => 'H',
+    //                 'densidad' => 'I',
+    //             ];
+    //             $colObs = 'K';
+    //             $colVobo = 'L';
+    //         } elseif (str_contains($tipo, 'queso')) {
+    //             $template = 'datos-queso.xlsx';
+    //             $filaDatos = 11;
+    //             $mapaColumnas = [
+    //                 'coliformes' => 'F',
+    //                 'e. coli' => 'G',
+    //                 'staphylococcus' => 'H',
+    //                 'mohos' => 'I',
+    //                 'humedad' => 'J',
+    //                 'solidos totales' => 'K',
+    //                 'grasa' => 'L',
+    //             ];
+    //             $colObs = 'M';
+    //             $colVobo = 'N';
+    //         } else {
+    //             continue;
+    //         }
+
+    //         $templatePath = storage_path("app/plantillas/{$template}");
+    //         if (!file_exists($templatePath)) continue;
+
+    //         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($templatePath);
+    //         $sheet = $spreadsheet->getActiveSheet();
+
+    //         // --- Fecha y hora ---
+    //         $sheet->setCellValue("A{$filaDatos}", now()->format('Y-m-d'));
+    //         $sheet->setCellValue("B{$filaDatos}", now()->format('H:i'));
+
+    //         // --- Condiciones ambientales ---
+    //         $sheet->setCellValue("C{$filaDatos}", '22.4'); // Temperatura
+    //         $sheet->setCellValue("D{$filaDatos}", '43.4'); // Humedad relativa
+
+    //         // --- Código interno ---
+    //         $sheet->setCellValue("E{$filaDatos}", $muestra->codigo_interno ?? '—');
+
+    //         // --- Recorrer ensayos ---
+    //         foreach ($muestra->ensayos as $ens) {
+    //             $nombre = strtolower($ens->nombre);
+    //             $pivot = $ens->pivot;
+    //             $muestraEnsayoId = $pivot->id;
+    //             $textoCelda = '';
+
+    //             // Buscar registros asociados
+    //             $micro = \App\Models\EnsayoMicrobiologia::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+    //             $fisico = \App\Models\EnsayoFisicoquimico::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+
+    //             // 🦠 MICROBIOLOGÍA
+    //             if ($micro) {
+    //                 $unidad = str_contains($tipo, 'leche') ? 'UFC/mL' : 'UFC/g';
+    //                 $textoCelda =
+    //                     "Dilución 1:\n" .
+    //                     "  C1: {$micro->dilucion1_c1}\n" .
+    //                     "  C2: {$micro->dilucion1_c2}\n" .
+    //                     "Dilución 2:\n" .
+    //                     "  C1: {$micro->dilucion2_c1}\n" .
+    //                     "  C2: {$micro->dilucion2_c2}\n" .
+    //                     "Resultado: {$micro->resultado} {$unidad}\n" .
+    //                     "Fórmula: (Σ de todas las diluciones / 4) * 1000";
+    //             }
+
+    //             // 🧪 FÍSICOQUÍMICO – GRASA
+    //             elseif ($fisico && $fisico->tipo === 'grasa') {
+    //                 $unidad = str_contains($tipo, 'leche') ? 'ml/100ml' : 'g/100g';
+    //                 $textoCelda =
+    //                     "Réplica 1:\n" .
+    //                     "  Menisco superior (B): {$fisico->replica1_b}\n" .
+    //                     "  Menisco inferior (A): {$fisico->replica1_a}\n" .
+    //                     "Réplica 2:\n" .
+    //                     "  Menisco superior (B): {$fisico->replica2_b}\n" .
+    //                     "  Menisco inferior (A): {$fisico->replica2_a}\n" .
+    //                     "Resultado: {$fisico->resultado_grasa} {$unidad}\n" .
+    //                     "Fórmula: Promedio de (B - A)";
+    //             }
+
+    //             // 🌡️ FÍSICOQUÍMICO – HUMEDAD o SÓLIDOS
+    //             elseif ($fisico && in_array($fisico->tipo, ['solidos_totales', 'humedad'])) {
+    //                 $textoCelda =
+    //                     "Réplica 1:\n" .
+    //                     "  m0: {$fisico->replica1_m0}\n" .
+    //                     "  m1: {$fisico->replica1_m1}\n" .
+    //                     "  m2: {$fisico->replica1_m2}\n" .
+    //                     "Resultado: {$fisico->resultado_porcentaje} %\n" .
+    //                     "Fórmula: ((m2 - m0) / (m1 - m0)) * 100";
+    //             }
+
+    //             // 📏 DENSIDAD
+    //             elseif ($fisico && $fisico->tipo === 'densidad') {
+    //                 $textoCelda = "Densidad: {$fisico->densidad}";
+    //             }
+
+    //             // Si no se encuentra ningún detalle
+    //             if (empty($textoCelda)) {
+    //                 // Si no hay registro de microbiología o fisicoquímica
+    //                 // y tampoco hay resultado en el pivot → no aplica
+    //                 if (is_null($pivot->resultado) || $pivot->resultado === '') {
+    //                     $textoCelda = 'N/A';
+    //                 } else {
+    //                     $textoCelda = $pivot->resultado;
+    //                 }
+    //             }
+
+
+    //             // Buscar columna correspondiente
+    //             foreach ($mapaColumnas as $clave => $col) {
+    //                 if (str_contains($nombre, $clave)) {
+    //                     $sheet->setCellValue("{$col}{$filaDatos}", $textoCelda);
+    //                     $sheet->getStyle("{$col}{$filaDatos}")
+    //                         ->getAlignment()
+    //                         ->setWrapText(true)
+    //                         ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+    //                     break;
+    //                 }
+    //             }
+    //         }
+
+    //         // Observaciones y VoBo
+    //         $sheet->setCellValue("{$colObs}{$filaDatos}", $muestra->condiciones ?? 'Sin observaciones');
+    //         $sheet->setCellValue("{$colVobo}{$filaDatos}", 'Luis Rubiano');
+
+    //         // Guardar archivo
+    //         $fileName = 'Datos_' . $solicitud->numero_solicitud . '_' . ucfirst($muestra->tipoMuestra->nombre) . '.xlsx';
+    //         $tempDir = storage_path('app/temp');
+    //         if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+    //         $filePath = "{$tempDir}/{$fileName}";
+
+    //         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    //         $writer->save($filePath);
+    //         $archivosGenerados[] = $filePath;
+    //     }
+
+    //     // --- Descargar ---
+    //     if (count($archivosGenerados) === 1) {
+    //         return response()->download($archivosGenerados[0])->deleteFileAfterSend(true);
+    //     }
+
+    //     $zipName = 'Datos_Solicitud_' . $solicitud->numero_solicitud . '.zip';
+    //     $zipPath = storage_path("app/temp/{$zipName}");
+    //     $zip = new \ZipArchive();
+
+    //     if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
+    //         foreach ($archivosGenerados as $archivo) {
+    //             $zip->addFile($archivo, basename($archivo));
+    //         }
+    //         $zip->close();
+    //     }
+
+    //     foreach ($archivosGenerados as $archivo) @unlink($archivo);
+
+    //     return response()->download($zipPath)->deleteFileAfterSend(true);
+    // }
+
+  public function exportarDatos($id)
+{
+    $solicitud = Solicitud::with([
+        'cliente.persona',
+        'muestras.tipoMuestra',
+        'muestras.ensayos'
+    ])->findOrFail($id);
+
+    if ($solicitud->muestras->isEmpty()) {
+        return back()->with('error', 'No hay muestras registradas para esta solicitud.');
+    }
+
+    $archivosGenerados = [];
+
+    foreach ($solicitud->muestras as $muestra) {
+        $tipo = strtolower($muestra->tipoMuestra->nombre ?? '');
+        $tipoMuestraId = $muestra->tipo_muestra_id;
+
+        // Selección de plantilla
+        if (str_contains($tipo, 'leche')) {
+            $template = 'datos-leche.xlsx';
+            $filaDatos = 11;
+            $mapaColumnas = [
+                'aerobios' => 'F',
+                'grasa' => 'G',
+                'solidos totales' => 'H',
+                'densidad' => 'I',
+            ];
+        } elseif (str_contains($tipo, 'queso')) {
+            $template = 'datos-queso.xlsx';
+            $filaDatos = 11;
+            $mapaColumnas = [
+                'coliformes' => 'F',
+                'e. coli' => 'G',
+                'staphylococcus' => 'H',
+                'mohos' => 'I',
+                'humedad' => 'J',
+                'solidos totales' => 'K',
+                'grasa' => 'L',
+            ];
+        } else {
+            continue;
+        }
+
+        $templatePath = storage_path("app/plantillas/{$template}");
+        if (!file_exists($templatePath)) continue;
+
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($templatePath);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // --- Fecha y hora
+        $sheet->setCellValue("A{$filaDatos}", now()->format('Y-m-d'));
+        $sheet->setCellValue("B{$filaDatos}", now()->format('H:i'));
+
+        // --- Condiciones ambientales
+        $sheet->setCellValue("C{$filaDatos}", '22.4');
+        $sheet->setCellValue("D{$filaDatos}", '43.4');
+
+        // --- Código interno
+        $sheet->setCellValue("E{$filaDatos}", $muestra->codigo_interno ?? '—');
+
+        // --- Ensayos con datos
+        $ensayosRegistrados = [];
+
+        foreach ($muestra->ensayos as $ens) {
+            $nombre = strtolower($ens->nombre);
+            $pivot = $ens->pivot;
+            $muestraEnsayoId = $pivot->id;
+            $textoCelda = null;
+
+            $micro = \App\Models\EnsayoMicrobiologia::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+            $fisico = \App\Models\EnsayoFisicoquimico::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+
+            if ($micro) {
+                $unidad = str_contains($tipo, 'leche') ? 'UFC/mL' : 'UFC/g';
+                $textoCelda =
+                    "Dilución 1:\n" .
+                    "  C1: {$micro->dilucion1_c1}\n" .
+                    "  C2: {$micro->dilucion1_c2}\n" .
+                    "Dilución 2:\n" .
+                    "  C1: {$micro->dilucion2_c1}\n" .
+                    "  C2: {$micro->dilucion2_c2}\n" .
+                    "Resultado: {$micro->resultado} {$unidad}\n" .
+                    "Fórmula: (Σ diluciones / 4) * 1000";
+            } elseif ($fisico && $fisico->tipo === 'grasa') {
+                $unidad = str_contains($tipo, 'leche') ? 'ml/100ml' : 'g/100g';
+                $textoCelda =
+                    "Réplica 1:\n" .
+                    "  Menisco sup. (B): {$fisico->replica1_b}\n" .
+                    "  Menisco inf. (A): {$fisico->replica1_a}\n" .
+                    "Réplica 2:\n" .
+                    "  Menisco sup. (B): {$fisico->replica2_b}\n" .
+                    "  Menisco inf. (A): {$fisico->replica2_a}\n" .
+                    "Resultado: {$fisico->resultado_grasa} {$unidad}\n" .
+                    "Fórmula: Promedio de (B - A)";
+            } elseif ($fisico && in_array($fisico->tipo, ['solidos_totales', 'humedad'])) {
+                $textoCelda =
+                    "Réplica 1:\n" .
+                    "  m0: {$fisico->replica1_m0}\n" .
+                    "  m1: {$fisico->replica1_m1}\n" .
+                    "  m2: {$fisico->replica1_m2}\n" .
+                    "Resultado: {$fisico->resultado_porcentaje} %\n" .
+                    "Fórmula: ((m2 - m0) / (m1 - m0)) * 100";
+            } elseif ($fisico && $fisico->tipo === 'densidad') {
+                $textoCelda = "Densidad: {$fisico->densidad}";
+            }
+
+            // Si no se encontró información, será N/A
+            if (empty($textoCelda)) {
+                $textoCelda = 'N/A';
+            }
+
+            // Colocar en su columna
+            foreach ($mapaColumnas as $clave => $col) {
+                if (str_contains($nombre, $clave)) {
+                    $sheet->setCellValue("{$col}{$filaDatos}", $textoCelda);
+                    $sheet->getStyle("{$col}{$filaDatos}")
+                        ->getAlignment()
+                        ->setWrapText(true)
+                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+                    $ensayosRegistrados[] = $clave;
+                    break;
+                }
+            }
+        }
+
+        // --- Ahora marcamos como N/A los ensayos que NO existen en esta muestra
+        foreach ($mapaColumnas as $clave => $col) {
+            if (!in_array($clave, $ensayosRegistrados)) {
+                $sheet->setCellValue("{$col}{$filaDatos}", "N/A");
+                $sheet->getStyle("{$col}{$filaDatos}")
+                    ->getFont()->setItalic(true)->getColor()->setARGB('FF777777');
+                $sheet->getStyle("{$col}{$filaDatos}")
+                    ->getAlignment()->setHorizontal('center')->setVertical('center');
+            }
+        }
+
+        // --- Observaciones y VoBo
+        $colObs = str_contains($tipo, 'leche') ? 'K' : 'M';
+        $colVobo = str_contains($tipo, 'leche') ? 'L' : 'N';
+        $sheet->setCellValue("{$colObs}{$filaDatos}", $muestra->condiciones ?? 'Sin observaciones');
+        $sheet->setCellValue("{$colVobo}{$filaDatos}", 'Luis Rubiano');
+
+        // --- Guardar archivo
+        $fileName = 'Datos_' . $solicitud->numero_solicitud . '_' . ucfirst($muestra->tipoMuestra->nombre) . '.xlsx';
+        $tempDir = storage_path('app/temp');
+        if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+        $filePath = "{$tempDir}/{$fileName}";
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        $archivosGenerados[] = $filePath;
+    }
+
+    // --- Descarga o ZIP
+    if (count($archivosGenerados) === 1) {
+        return response()->download($archivosGenerados[0])->deleteFileAfterSend(true);
+    }
+
+    $zipName = 'Datos_Solicitud_' . $solicitud->numero_solicitud . '.zip';
+    $zipPath = storage_path("app/temp/{$zipName}");
+    $zip = new \ZipArchive();
+
+    if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
+        foreach ($archivosGenerados as $archivo) {
+            $zip->addFile($archivo, basename($archivo));
+        }
+        $zip->close();
+    }
+
+    foreach ($archivosGenerados as $archivo) @unlink($archivo);
+    return response()->download($zipPath)->deleteFileAfterSend(true);
+}
+
 }

@@ -79,24 +79,28 @@ Route::middleware('auth')->group(function () {
     });
 
 
-    // Ejemplo: solo quien tenga permiso ver_resultados
-    Route::middleware(['permiso:registrar_resultados'])->group(function () {
-        Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+   Route::middleware(['permiso:registrar_resultados'])->group(function () {
+    Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
 
-        Route::get('/resultados/exportar/{id}', [ResultadoController::class, 'exportar'])
-            ->name('resultados.exportar');
+    // ✅ Para el analista - Nuevo formato simple
+    Route::get('/resultados/{solicitud}/exportar-simple', [ResultadoController::class, 'exportarDatos'])
+        ->name('resultados.exportar.simple');
 
-        Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
-            ->name('resultados.enviarCorreo');
+    // ✅ Para el gestor - Formato completo (mantener el original)
+    Route::get('/resultados/{solicitud}/exportar-completo', [ResultadoController::class, 'exportar'])
+        ->name('resultados.exportar.completo');
 
+    Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
+        ->name('resultados.enviarCorreo');
 
-        // Registrar resultados
-        Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
+    // Registrar resultados
+    Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
 
+    Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
+        ->name('resultados.update');
 
-        Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
-            ->name('resultados.update');
-    });
+    Route::get('/resultados/{solicitud}/show', [ResultadoController::class, 'show'])->name('resultados.show');
+});
 });
 
 require __DIR__ . '/auth.php';
