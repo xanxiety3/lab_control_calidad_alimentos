@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ReporteLaboratorioMail;
 use App\Mail\ResultadoMailable;
 use App\Models\EnsayoFisicoquimico;
 use App\Models\EnsayoMicrobiologia;
 use App\Models\Muestra;
 use App\Models\MuestraEnsayo;
 use App\Models\Solicitud;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -64,7 +66,11 @@ class ResultadoController extends Controller
             'muestras.muestraEnsayos.fisicoquimico'
         ])->findOrFail($id);
 
-        return view('resultados.show', compact('solicitud'));
+        $gestores = User::whereHas('role', function ($q) {
+            $q->where('role_id', 4);
+        })->get();
+
+        return view('resultados.show', compact('solicitud', 'gestores'));
     }
 
 
@@ -1085,179 +1091,200 @@ class ResultadoController extends Controller
     //     return response()->download($zipPath)->deleteFileAfterSend(true);
     // }
 
-  public function exportarDatos($id)
-{
-    $solicitud = Solicitud::with([
-        'cliente.persona',
-        'muestras.tipoMuestra',
-        'muestras.ensayos'
-    ])->findOrFail($id);
+    public function exportarDatos($id)
+    {
+        $solicitud = Solicitud::with([
+            'cliente.persona',
+            'muestras.tipoMuestra',
+            'muestras.ensayos'
+        ])->findOrFail($id);
 
-    if ($solicitud->muestras->isEmpty()) {
-        return back()->with('error', 'No hay muestras registradas para esta solicitud.');
-    }
-
-    $archivosGenerados = [];
-
-    foreach ($solicitud->muestras as $muestra) {
-        $tipo = strtolower($muestra->tipoMuestra->nombre ?? '');
-        $tipoMuestraId = $muestra->tipo_muestra_id;
-
-        // Selección de plantilla
-        if (str_contains($tipo, 'leche')) {
-            $template = 'datos-leche.xlsx';
-            $filaDatos = 11;
-            $mapaColumnas = [
-                'aerobios' => 'F',
-                'grasa' => 'G',
-                'solidos totales' => 'H',
-                'densidad' => 'I',
-            ];
-        } elseif (str_contains($tipo, 'queso')) {
-            $template = 'datos-queso.xlsx';
-            $filaDatos = 11;
-            $mapaColumnas = [
-                'coliformes' => 'F',
-                'e. coli' => 'G',
-                'staphylococcus' => 'H',
-                'mohos' => 'I',
-                'humedad' => 'J',
-                'solidos totales' => 'K',
-                'grasa' => 'L',
-            ];
-        } else {
-            continue;
+        if ($solicitud->muestras->isEmpty()) {
+            return back()->with('error', 'No hay muestras registradas para esta solicitud.');
         }
 
-        $templatePath = storage_path("app/plantillas/{$template}");
-        if (!file_exists($templatePath)) continue;
+        $archivosGenerados = [];
 
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($templatePath);
-        $sheet = $spreadsheet->getActiveSheet();
+        foreach ($solicitud->muestras as $muestra) {
+            $tipo = strtolower($muestra->tipoMuestra->nombre ?? '');
+            $tipoMuestraId = $muestra->tipo_muestra_id;
 
-        // --- Fecha y hora
-        $sheet->setCellValue("A{$filaDatos}", now()->format('Y-m-d'));
-        $sheet->setCellValue("B{$filaDatos}", now()->format('H:i'));
-
-        // --- Condiciones ambientales
-        $sheet->setCellValue("C{$filaDatos}", '22.4');
-        $sheet->setCellValue("D{$filaDatos}", '43.4');
-
-        // --- Código interno
-        $sheet->setCellValue("E{$filaDatos}", $muestra->codigo_interno ?? '—');
-
-        // --- Ensayos con datos
-        $ensayosRegistrados = [];
-
-        foreach ($muestra->ensayos as $ens) {
-            $nombre = strtolower($ens->nombre);
-            $pivot = $ens->pivot;
-            $muestraEnsayoId = $pivot->id;
-            $textoCelda = null;
-
-            $micro = \App\Models\EnsayoMicrobiologia::where('muestra_ensayo_id', $muestraEnsayoId)->first();
-            $fisico = \App\Models\EnsayoFisicoquimico::where('muestra_ensayo_id', $muestraEnsayoId)->first();
-
-            if ($micro) {
-                $unidad = str_contains($tipo, 'leche') ? 'UFC/mL' : 'UFC/g';
-                $textoCelda =
-                    "Dilución 1:\n" .
-                    "  C1: {$micro->dilucion1_c1}\n" .
-                    "  C2: {$micro->dilucion1_c2}\n" .
-                    "Dilución 2:\n" .
-                    "  C1: {$micro->dilucion2_c1}\n" .
-                    "  C2: {$micro->dilucion2_c2}\n" .
-                    "Resultado: {$micro->resultado} {$unidad}\n" .
-                    "Fórmula: (Σ diluciones / 4) * 1000";
-            } elseif ($fisico && $fisico->tipo === 'grasa') {
-                $unidad = str_contains($tipo, 'leche') ? 'ml/100ml' : 'g/100g';
-                $textoCelda =
-                    "Réplica 1:\n" .
-                    "  Menisco sup. (B): {$fisico->replica1_b}\n" .
-                    "  Menisco inf. (A): {$fisico->replica1_a}\n" .
-                    "Réplica 2:\n" .
-                    "  Menisco sup. (B): {$fisico->replica2_b}\n" .
-                    "  Menisco inf. (A): {$fisico->replica2_a}\n" .
-                    "Resultado: {$fisico->resultado_grasa} {$unidad}\n" .
-                    "Fórmula: Promedio de (B - A)";
-            } elseif ($fisico && in_array($fisico->tipo, ['solidos_totales', 'humedad'])) {
-                $textoCelda =
-                    "Réplica 1:\n" .
-                    "  m0: {$fisico->replica1_m0}\n" .
-                    "  m1: {$fisico->replica1_m1}\n" .
-                    "  m2: {$fisico->replica1_m2}\n" .
-                    "Resultado: {$fisico->resultado_porcentaje} %\n" .
-                    "Fórmula: ((m2 - m0) / (m1 - m0)) * 100";
-            } elseif ($fisico && $fisico->tipo === 'densidad') {
-                $textoCelda = "Densidad: {$fisico->densidad}";
+            // Selección de plantilla
+            if (str_contains($tipo, 'leche')) {
+                $template = 'datos-leche.xlsx';
+                $filaDatos = 11;
+                $mapaColumnas = [
+                    'aerobios' => 'F',
+                    'grasa' => 'G',
+                    'solidos totales' => 'H',
+                    'densidad' => 'I',
+                ];
+            } elseif (str_contains($tipo, 'queso')) {
+                $template = 'datos-queso.xlsx';
+                $filaDatos = 11;
+                $mapaColumnas = [
+                    'coliformes' => 'F',
+                    'e. coli' => 'G',
+                    'staphylococcus' => 'H',
+                    'mohos' => 'I',
+                    'humedad' => 'J',
+                    'solidos totales' => 'K',
+                    'grasa' => 'L',
+                ];
+            } else {
+                continue;
             }
 
-            // Si no se encontró información, será N/A
-            if (empty($textoCelda)) {
-                $textoCelda = 'N/A';
-            }
+            $templatePath = storage_path("app/plantillas/{$template}");
+            if (!file_exists($templatePath)) continue;
 
-            // Colocar en su columna
-            foreach ($mapaColumnas as $clave => $col) {
-                if (str_contains($nombre, $clave)) {
-                    $sheet->setCellValue("{$col}{$filaDatos}", $textoCelda);
-                    $sheet->getStyle("{$col}{$filaDatos}")
-                        ->getAlignment()
-                        ->setWrapText(true)
-                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
-                    $ensayosRegistrados[] = $clave;
-                    break;
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($templatePath);
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // --- Fecha y hora
+            $sheet->setCellValue("A{$filaDatos}", now()->format('Y-m-d'));
+            $sheet->setCellValue("B{$filaDatos}", now()->format('H:i'));
+
+            // --- Condiciones ambientales
+            $sheet->setCellValue("C{$filaDatos}", '22.4');
+            $sheet->setCellValue("D{$filaDatos}", '43.4');
+
+            // --- Código interno
+            $sheet->setCellValue("E{$filaDatos}", $muestra->codigo_interno ?? '—');
+
+            // --- Ensayos con datos
+            $ensayosRegistrados = [];
+
+            foreach ($muestra->ensayos as $ens) {
+                $nombre = strtolower($ens->nombre);
+                $pivot = $ens->pivot;
+                $muestraEnsayoId = $pivot->id;
+                $textoCelda = null;
+
+                $micro = \App\Models\EnsayoMicrobiologia::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+                $fisico = \App\Models\EnsayoFisicoquimico::where('muestra_ensayo_id', $muestraEnsayoId)->first();
+
+                if ($micro) {
+                    $unidad = str_contains($tipo, 'leche') ? 'UFC/mL' : 'UFC/g';
+                    $textoCelda =
+                        "Dilución 1:\n" .
+                        "  C1: {$micro->dilucion1_c1}\n" .
+                        "  C2: {$micro->dilucion1_c2}\n" .
+                        "Dilución 2:\n" .
+                        "  C1: {$micro->dilucion2_c1}\n" .
+                        "  C2: {$micro->dilucion2_c2}\n" .
+                        "Resultado: {$micro->resultado} {$unidad}\n" .
+                        "Fórmula: (Σ diluciones / 4) * 1000";
+                } elseif ($fisico && $fisico->tipo === 'grasa') {
+                    $unidad = str_contains($tipo, 'leche') ? 'ml/100ml' : 'g/100g';
+                    $textoCelda =
+                        "Réplica 1:\n" .
+                        "  Menisco sup. (B): {$fisico->replica1_b}\n" .
+                        "  Menisco inf. (A): {$fisico->replica1_a}\n" .
+                        "Réplica 2:\n" .
+                        "  Menisco sup. (B): {$fisico->replica2_b}\n" .
+                        "  Menisco inf. (A): {$fisico->replica2_a}\n" .
+                        "Resultado: {$fisico->resultado_grasa} {$unidad}\n" .
+                        "Fórmula: Promedio de (B - A)";
+                } elseif ($fisico && in_array($fisico->tipo, ['solidos_totales', 'humedad'])) {
+                    $textoCelda =
+                        "Réplica 1:\n" .
+                        "  m0: {$fisico->replica1_m0}\n" .
+                        "  m1: {$fisico->replica1_m1}\n" .
+                        "  m2: {$fisico->replica1_m2}\n" .
+                        "Resultado: {$fisico->resultado_porcentaje} %\n" .
+                        "Fórmula: ((m2 - m0) / (m1 - m0)) * 100";
+                } elseif ($fisico && $fisico->tipo === 'densidad') {
+                    $textoCelda = "Densidad: {$fisico->densidad}";
+                }
+
+                // Si no se encontró información, será N/A
+                if (empty($textoCelda)) {
+                    $textoCelda = 'N/A';
+                }
+
+                // Colocar en su columna
+                foreach ($mapaColumnas as $clave => $col) {
+                    if (str_contains($nombre, $clave)) {
+                        $sheet->setCellValue("{$col}{$filaDatos}", $textoCelda);
+                        $sheet->getStyle("{$col}{$filaDatos}")
+                            ->getAlignment()
+                            ->setWrapText(true)
+                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
+                        $ensayosRegistrados[] = $clave;
+                        break;
+                    }
                 }
             }
-        }
 
-        // --- Ahora marcamos como N/A los ensayos que NO existen en esta muestra
-        foreach ($mapaColumnas as $clave => $col) {
-            if (!in_array($clave, $ensayosRegistrados)) {
-                $sheet->setCellValue("{$col}{$filaDatos}", "N/A");
-                $sheet->getStyle("{$col}{$filaDatos}")
-                    ->getFont()->setItalic(true)->getColor()->setARGB('FF777777');
-                $sheet->getStyle("{$col}{$filaDatos}")
-                    ->getAlignment()->setHorizontal('center')->setVertical('center');
+            // --- Ahora marcamos como N/A los ensayos que NO existen en esta muestra
+            foreach ($mapaColumnas as $clave => $col) {
+                if (!in_array($clave, $ensayosRegistrados)) {
+                    $sheet->setCellValue("{$col}{$filaDatos}", "N/A");
+                    $sheet->getStyle("{$col}{$filaDatos}")
+                        ->getFont()->setItalic(true)->getColor()->setARGB('FF777777');
+                    $sheet->getStyle("{$col}{$filaDatos}")
+                        ->getAlignment()->setHorizontal('center')->setVertical('center');
+                }
             }
+
+            // --- Observaciones y VoBo
+            $colObs = str_contains($tipo, 'leche') ? 'K' : 'M';
+            $colVobo = str_contains($tipo, 'leche') ? 'L' : 'N';
+            $sheet->setCellValue("{$colObs}{$filaDatos}", $muestra->condiciones ?? 'Sin observaciones');
+            $sheet->setCellValue("{$colVobo}{$filaDatos}", 'Luis Rubiano');
+
+            // --- Guardar archivo
+            $fileName = 'Datos_' . $solicitud->numero_solicitud . '_' . ucfirst($muestra->tipoMuestra->nombre) . '.xlsx';
+            $tempDir = storage_path('app/temp');
+            if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
+            $filePath = "{$tempDir}/{$fileName}";
+
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save($filePath);
+
+            $archivosGenerados[] = $filePath;
         }
 
-        // --- Observaciones y VoBo
-        $colObs = str_contains($tipo, 'leche') ? 'K' : 'M';
-        $colVobo = str_contains($tipo, 'leche') ? 'L' : 'N';
-        $sheet->setCellValue("{$colObs}{$filaDatos}", $muestra->condiciones ?? 'Sin observaciones');
-        $sheet->setCellValue("{$colVobo}{$filaDatos}", 'Luis Rubiano');
-
-        // --- Guardar archivo
-        $fileName = 'Datos_' . $solicitud->numero_solicitud . '_' . ucfirst($muestra->tipoMuestra->nombre) . '.xlsx';
-        $tempDir = storage_path('app/temp');
-        if (!is_dir($tempDir)) mkdir($tempDir, 0777, true);
-        $filePath = "{$tempDir}/{$fileName}";
-
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save($filePath);
-
-        $archivosGenerados[] = $filePath;
-    }
-
-    // --- Descarga o ZIP
-    if (count($archivosGenerados) === 1) {
-        return response()->download($archivosGenerados[0])->deleteFileAfterSend(true);
-    }
-
-    $zipName = 'Datos_Solicitud_' . $solicitud->numero_solicitud . '.zip';
-    $zipPath = storage_path("app/temp/{$zipName}");
-    $zip = new \ZipArchive();
-
-    if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
-        foreach ($archivosGenerados as $archivo) {
-            $zip->addFile($archivo, basename($archivo));
+        // --- Descarga o ZIP
+        if (count($archivosGenerados) === 1) {
+            return response()->download($archivosGenerados[0])->deleteFileAfterSend(true);
         }
-        $zip->close();
+
+        $zipName = 'Datos_Solicitud_' . $solicitud->numero_solicitud . '.zip';
+        $zipPath = storage_path("app/temp/{$zipName}");
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
+            foreach ($archivosGenerados as $archivo) {
+                $zip->addFile($archivo, basename($archivo));
+            }
+            $zip->close();
+        }
+
+        foreach ($archivosGenerados as $archivo) @unlink($archivo);
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 
-    foreach ($archivosGenerados as $archivo) @unlink($archivo);
-    return response()->download($zipPath)->deleteFileAfterSend(true);
-}
+    public function enviarReporte(Request $request, $id)
+    {
+        $request->validate([
+            'usuarios' => 'required|array|min:1',
+        ]);
 
+        $solicitud = Solicitud::with(['muestras.tipoMuestra'])->findOrFail($id);
+
+        // Genera el archivo Excel temporalmente (usa tu método actual)
+        $archivo = app()->call([$this, 'exportarDatos'], ['id' => $id]);
+        $ruta = $archivo->getFile()->getPathname();
+
+        // Obtiene los usuarios seleccionados
+        $usuarios = User::whereIn('id', $request->usuarios)->get();
+
+        foreach ($usuarios as $usuario) {
+            Mail::to($usuario->email)->send(new ReporteLaboratorioMail($solicitud, $ruta));
+        }
+
+        return back()->with('success', 'Reporte enviado correctamente a los gestores técnicos seleccionados.');
+    }
 }

@@ -16,6 +16,68 @@
                     Volver al listado
                 </a>
             </div>
+                        <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-primary">Resultados de la solicitud
+                    #{{ $solicitud->numero_solicitud }}</h1>
+
+                <div class="flex space-x-3">
+                    {{-- Botón Excel --}}
+                    <a href="{{ route('resultados.exportar.simple', $solicitud->id) }}"
+                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg shadow hover:bg-green-700 transition">
+                        <x-heroicon-o-document-arrow-down class="w-5 h-5 mr-2" />
+                        Exportar Excel
+                    </a>
+
+                    {{-- Botón Enviar correo --}}
+                    <button id="btnEnviarCorreo"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow hover:bg-blue-700 transition">
+                        <x-heroicon-o-envelope class="w-5 h-5 mr-2" />
+                        Enviar a Gestor Técnico
+                    </button>
+                </div>
+            </div>
+
+            {{-- Modal Enviar Correo --}}
+            <div id="modalCorreo"
+                class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Enviar reporte al Gestor Técnico</h2>
+
+                    <form id="formEnviarCorreo" method="POST" action="{{ route('reportes.enviar', $solicitud->id) }}">
+                        @csrf
+                        <p class="text-gray-600 mb-2">Selecciona a quién deseas enviar el archivo:</p>
+
+                        <div class="max-h-60 overflow-y-auto border rounded-md p-3 mb-4 space-y-2">
+                            @foreach ($gestores as $gestor)
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" name="usuarios[]" value="{{ $gestor->id }}"
+                                        class="text-primary focus:ring-primary">
+                                    <span>{{ $gestor->name }} ({{ $gestor->email }})</span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" id="btnCancelarCorreo"
+                                class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const modal = document.getElementById('modalCorreo');
+                    const openBtn = document.getElementById('btnEnviarCorreo');
+                    const closeBtn = document.getElementById('btnCancelarCorreo');
+
+                    openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+                    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+                });
+            </script>
+
 
             {{-- Información de la solicitud --}}
             <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">

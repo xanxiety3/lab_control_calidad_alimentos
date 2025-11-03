@@ -79,28 +79,31 @@ Route::middleware('auth')->group(function () {
     });
 
 
-   Route::middleware(['permiso:registrar_resultados'])->group(function () {
-    Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
+    Route::middleware(['permiso:registrar_resultados'])->group(function () {
+        Route::get('/resultados', [ResultadoController::class, 'index'])->name('resultados.index');
 
-    // ✅ Para el analista - Nuevo formato simple
-    Route::get('/resultados/{solicitud}/exportar-simple', [ResultadoController::class, 'exportarDatos'])
-        ->name('resultados.exportar.simple');
+        // ✅ Para el analista - Nuevo formato simple
+        Route::get('/resultados/{solicitud}/exportar-simple', [ResultadoController::class, 'exportarDatos'])
+            ->name('resultados.exportar.simple');
 
-    // ✅ Para el gestor - Formato completo (mantener el original)
-    Route::get('/resultados/{solicitud}/exportar-completo', [ResultadoController::class, 'exportar'])
-        ->name('resultados.exportar.completo');
+        // ✅ Para el gestor - Formato completo (mantener el original)
+        Route::get('/resultados/{solicitud}/exportar-completo', [ResultadoController::class, 'exportar'])
+            ->name('resultados.exportar.completo');
 
-    Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
-        ->name('resultados.enviarCorreo');
+        Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
+            ->name('resultados.enviarCorreo');
 
-    // Registrar resultados
-    Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
+        // Registrar resultados
+        Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
 
-    Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
-        ->name('resultados.update');
+        Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
+            ->name('resultados.update');
+            
+        Route::post('/reportes/{id}/enviar', [ResultadoController::class, 'enviarReporte'])
+            ->name('reportes.enviar');
 
-    Route::get('/resultados/{solicitud}/show', [ResultadoController::class, 'show'])->name('resultados.show');
-});
+        Route::get('/resultados/{solicitud}/show', [ResultadoController::class, 'show'])->name('resultados.show');
+    });
 });
 
 require __DIR__ . '/auth.php';

@@ -70,4 +70,6 @@ class Solicitud extends Model
     {
         return $this->calcularEstadoGlobal();
     }
+
+    
 }

@@ -27,7 +27,7 @@
                     <!-- Logo -->
                     <div class="flex items-center space-x-1">
                         <x-application-logo class="h-16 w-auto" />
-                        <span class="font-semibold text-lg tracking-wide">LCCA</span>
+                        <span class="font-semibold text-lg tracking-wide"></span>
                     </div>
                     <!-- Menú principal -->
                     <div class="hidden md:flex space-x-6 text-sm">
@@ -51,7 +51,15 @@
                         @permiso('registrar_resultado')
                             <a href="{{ route('resultados.index') }}" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-beaker class="w-5 h-5" />
-                                <span>Registrar resultados</span>
+                                <span>Registrar resultados primarios</span>
+                            </a>
+                        @endpermiso
+
+
+                        @permiso('registrar_resultado_final')
+                            <a href="{{ route('resultados.index') }}" class="hover:text-secondary flex items-center space-x-1">
+                                <x-heroicon-o-beaker class="w-5 h-5" />
+                                <span>Registrar resultados finales</span>
                             </a>
                         @endpermiso
 

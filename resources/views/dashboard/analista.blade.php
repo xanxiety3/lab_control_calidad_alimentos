@@ -43,6 +43,7 @@
                 </div>
             @endif
 
+
             {{-- 🧪 Tabla de solicitudes --}}
             <div class="overflow-hidden border border-gray-100/50 rounded-xl shadow-sm">
                 <table class="w-full text-sm text-gray-700">
@@ -128,11 +129,11 @@
                                             <x-heroicon-o-eye class="w-4 h-4" />
                                             Ver resultados
                                         </a>
-                                        <a href="{{ route('resultados.exportar.simple', $solicitud->id) }}"
+                                        {{-- <a href="{{ route('resultados.exportar.simple', $solicitud->id) }}"
                                             class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg shadow-sm transition-all">
                                             <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
                                             Excel
-                                        </a>
+                                        </a> --}}
                                     @endif
                                 </td>
                             </tr>
