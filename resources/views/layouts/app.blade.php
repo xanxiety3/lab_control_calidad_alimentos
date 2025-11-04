@@ -57,7 +57,7 @@
 
 
                         @permiso('registrar_resultado_final')
-                            <a href="{{ route('resultados.index') }}" class="hover:text-secondary flex items-center space-x-1">
+                            <a href="{{ route('gestor.index') }}" class="hover:text-secondary flex items-center space-x-1">
                                 <x-heroicon-o-beaker class="w-5 h-5" />
                                 <span>Registrar resultados finales</span>
                             </a>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\GestorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\RemisionController;
@@ -33,7 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/admin', fn() => view('dashboard.admin'))->name('dashboard.admin');
     Route::get('/dashboard/recepcion', [RecepcionController::class, 'index'])->name('dashboard.recepcion');
     Route::get('/dashboard/analista', [ResultadoController::class, 'index'])->name('dashboard.analista');
-    Route::get('/dashboard/gestor', [RecepcionController::class, 'gestorFinalizadas'])->name('dashboard.gestor');
+    Route::get('/dashboard/gestor', [GestorController::class, 'index'])->name('dashboard.gestor');
     Route::get('/dashboard/consulta', fn() => view('dashboard.consulta'))->name('dashboard.consulta');
 
 
@@ -86,23 +87,32 @@ Route::middleware('auth')->group(function () {
         Route::get('/resultados/{solicitud}/exportar-simple', [ResultadoController::class, 'exportarDatos'])
             ->name('resultados.exportar.simple');
 
-        // ✅ Para el gestor - Formato completo (mantener el original)
-        Route::get('/resultados/{solicitud}/exportar-completo', [ResultadoController::class, 'exportar'])
-            ->name('resultados.exportar.completo');
-
-        Route::get('/resultados/enviar/{id}', [ResultadoController::class, 'enviarCorreo'])
-            ->name('resultados.enviarCorreo');
-
         // Registrar resultados
         Route::get('/resultados/{solicitud}', [ResultadoController::class, 'edit'])->name('resultados.edit');
 
         Route::put('/resultados/{solicitud}', [ResultadoController::class, 'update'])
             ->name('resultados.update');
-            
+
         Route::post('/reportes/{id}/enviar', [ResultadoController::class, 'enviarReporte'])
             ->name('reportes.enviar');
 
         Route::get('/resultados/{solicitud}/show', [ResultadoController::class, 'show'])->name('resultados.show');
+    });
+
+    Route::middleware(['permiso:registrar_resultados_final'])->group(function () {
+        Route::get('/gestor-tecnico', [GestorController::class, 'index'])->name('gestor.index');
+        Route::get('/dashboard/gestor/{id}/revisar', [GestorController::class, 'revisar'])->name('gestor.revisar');
+        Route::get('/dashboard/gestor/{id}/ver', [GestorController::class, 'ver'])->name('gestor.ver');
+        Route::put('/dashboard/gestor/muestra/{id}', [GestorController::class, 'actualizarMuestra'])
+    ->name('gestor.actualizarMuestra');
+
+
+        // ✅ Para el gestor - Formato completo (mantener el original)
+        Route::get('/resultados/{solicitud}/exportar-completo', [GestorController::class, 'exportar'])
+            ->name('resultados.exportar.completo');
+
+        Route::get('/resultados/enviar/{id}', [GestorController::class, 'enviarCorreo'])
+            ->name('resultados.enviarCorreo');
     });
 });
 

@@ -19,6 +19,7 @@ class EnsayoMicrobiologia extends Model
         'dilucion2_c2',
         'resultado',
         'unidad',
+        'updated_at',
     ];
 
     /** 🔗 Relación con muestra_ensayo */

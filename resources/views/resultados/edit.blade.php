@@ -251,11 +251,38 @@
         }
 
         function calcularSolidos(id, unidad) {
-            const m0 = parseFloat(document.getElementById(`m0_${id}`).value) || 0;
-            const m1 = parseFloat(document.getElementById(`m1_${id}`).value) || 0;
-            const m2 = parseFloat(document.getElementById(`m2_${id}`).value) || 0;
+            const m0 = parseFloat(document.getElementById(`m0_${id}`).value);
+            const m1 = parseFloat(document.getElementById(`m1_${id}`).value);
+            const m2 = parseFloat(document.getElementById(`m2_${id}`).value);
+
+            const resultadoSpan = document.getElementById(`resultado_solidos_${id}`);
+            const hiddenInput = document.getElementById(`resultado_solidos_hidden_${id}`);
+
+            // Validaciones básicas
+            if (isNaN(m0) || isNaN(m1) || isNaN(m2)) {
+                resultadoSpan.textContent = "⚠️ Datos incompletos";
+                hiddenInput.value = "";
+                return;
+            }
+
+            if (m1 === m0) {
+                resultadoSpan.textContent = "⚠️ m1 y m0 no pueden ser iguales";
+                hiddenInput.value = "";
+                return;
+            }
+
             const resultado = ((m2 - m0) / (m1 - m0)) * 100;
-            document.getElementById(`resultado_solidos_${id}`).textContent = `${resultado.toFixed(2)} ${unidad}`;
+
+            // Validar que no sea negativo o infinito
+            if (!isFinite(resultado) || resultado < 0) {
+                resultadoSpan.textContent = "⚠️ Verifique los datos";
+                hiddenInput.value = "";
+                return;
+            }
+
+            // Mostrar y guardar resultado
+            resultadoSpan.textContent = `${resultado.toFixed(2)} ${unidad}`;
+            hiddenInput.value = resultado.toFixed(2);
         }
     </script>
 </x-app-layout>

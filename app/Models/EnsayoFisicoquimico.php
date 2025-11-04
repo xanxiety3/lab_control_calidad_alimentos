@@ -25,6 +25,7 @@
                         'replica1_m2',
                         'resultado_porcentaje',
                         'densidad',
+                        'updated_at',
                     ];
 
                     /** 🔗 Relación con muestra_ensayo */
