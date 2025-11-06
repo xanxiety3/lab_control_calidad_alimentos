@@ -31,85 +31,46 @@ class GestorController extends Controller
     }
 
 
-    public function revisar($id)
+    public function edit($id)
     {
-        $solicitud = \App\Models\Solicitud::with([
-            'cliente.persona',
-            'muestras.tipoMuestra',
-            'muestras.muestraEnsayos.ensayo',
-            'muestras.muestraEnsayos.fisicoquimico',
-            'muestras.muestraEnsayos.microbiologia'
-        ])->findOrFail($id);
+       $muestras = Muestra::with(['muestraEnsayos.ensayo', 'muestraEnsayos.fisicoquimico', 'muestraEnsayos.microbiologia'])
+            ->where('estado', 'finalizada')
+            ->get();
 
-        return view('gestor.revisar', compact('solicitud'));
+        return view('gestor.revisar', compact('muestras'));
     }
 
-    public function ver($id)
+  public function accion(Request $request, $id)
     {
-        $muestra = Muestra::with([
-            'tipoMuestra',
-            'muestraEnsayos.ensayo',
-            'muestraEnsayos.fisicoquimico',
-            'muestraEnsayos.microbiologia'
-        ])->findOrFail($id);
+        $muestraEnsayo = MuestraEnsayo::findOrFail($id);
+        $muestraEnsayo->estado = $request->input('accion'); // 'aceptado' o 'rechazado'
+        $muestraEnsayo->save();
 
-        return view('gestor.show', compact('muestra'));
+        return back()->with('success', 'Acción registrada correctamente.');
     }
 
-
-    // ✅ Aprobación / ❌ Rechazo
-    public function actualizarEstado(Request $request, $id)
-    {
-        $request->validate([
-            'estado' => 'required|in:aprobada,rechazada',
-            'observacion' => 'nullable|string|max:500'
-        ]);
-
-        $muestra = Muestra::findOrFail($id);
-        $muestra->estado = $request->estado;
-        $muestra->condiciones = $request->observacion;
-        $muestra->save();
-
-        return redirect()->route('dashboard.gestor')
-            ->with('success', '✅ Revisión registrada correctamente.');
-    }
-
-
-  public function actualizarMuestra(Request $request, $id)
+    public function accionAjax(Request $request)
 {
-    // 🔹 Actualizar microbiología
-    if ($request->has('micro')) {
-        foreach ($request->micro as $data) {
-            \App\Models\EnsayoMicrobiologia::where('id', $data['id'])->update([
-                'dilucion1_c1' => $data['dilucion1_c1'] ?? null,
-                'dilucion1_c2' => $data['dilucion1_c2'] ?? null,
-                'dilucion2_c1' => $data['dilucion2_c1'] ?? null,
-                'dilucion2_c2' => $data['dilucion2_c2'] ?? null,
-                'resultado' => $data['resultado'] ?? null,
-            ]);
-        }
-    }
+    try {
+        $ensayo = MuestraEnsayo::findOrFail($request->ensayo_id);
+        $ensayo->estado = $request->accion;
+        $ensayo->save();
 
-    // 🔹 Actualizar fisicoquímicos
-    if ($request->has('fisico')) {
-        foreach ($request->fisico as $data) {
-            \App\Models\EnsayoFisicoquimico::where('id', $data['id'])->update([
-                'replica1_a' => $data['replica1_a'] ?? null,
-                'replica1_b' => $data['replica1_b'] ?? null,
-                'replica2_a' => $data['replica2_a'] ?? null,
-                'replica2_b' => $data['replica2_b'] ?? null,
-                'replica1_m0' => $data['replica1_m0'] ?? null,
-                'replica1_m1' => $data['replica1_m1'] ?? null,
-                'replica1_m2' => $data['replica1_m2'] ?? null,
-                'resultado_grasa' => $data['resultado_grasa'] ?? null,
-                'resultado_porcentaje' => $data['resultado_porcentaje'] ?? null,
-                'densidad' => $data['densidad'] ?? null,
-            ]);
-        }
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()]);
     }
-
-    return back()->with('success', '✅ Resultados de la muestra actualizados correctamente.');
 }
+
+    
+public function cambiarEstado(Request $request, MuestraEnsayo $muestraEnsayo)
+{
+    $request->validate(['estado' => 'required|in:aceptado,rechazado']);
+    $muestraEnsayo->update(['estado' => $request->estado]);
+
+    return back()->with('success', 'Estado actualizado correctamente.');
+}
+
 
 
     public function exportar($id)

@@ -99,20 +99,25 @@ Route::middleware('auth')->group(function () {
         Route::get('/resultados/{solicitud}/show', [ResultadoController::class, 'show'])->name('resultados.show');
     });
 
-    Route::middleware(['permiso:registrar_resultados_final'])->group(function () {
+    Route::middleware(['permiso:registrar_resultado_final'])->group(function () {
         Route::get('/gestor-tecnico', [GestorController::class, 'index'])->name('gestor.index');
-        Route::get('/dashboard/gestor/{id}/revisar', [GestorController::class, 'revisar'])->name('gestor.revisar');
-        Route::get('/dashboard/gestor/{id}/ver', [GestorController::class, 'ver'])->name('gestor.ver');
-        Route::put('/dashboard/gestor/muestra/{id}', [GestorController::class, 'actualizarMuestra'])
-    ->name('gestor.actualizarMuestra');
+       
+        Route::get('/solicitud/{id}/edit', [GestorController::class, 'edit'])->name('gestor.edit');
+        Route::put('/solicitud/{id}/aprobar', [GestorController::class, 'aprobar'])->name('gestor.aprobar');
+        Route::post('/gestor/accion-ajax', [GestorController::class, 'accionAjax'])->name('gestor.accion.ajax');
 
+            Route::post('/gestor/acciones/{id}', [GestorController::class, 'accion'])->name('gestor.accion');
+        Route::get('/solicitud/{id}/descargar', [GestorController::class, 'descargar'])->name('gestor.descargar');
+        Route::post('/solicitud/{id}/enviar', [GestorController::class, 'enviar'])->name('gestor.enviar');
 
+    Route::post('/gestor/cambiar-estado/{id}', [GestorController::class, 'cambiarEstado'])
+        ->name('gestor.cambiarEstado');
         // ✅ Para el gestor - Formato completo (mantener el original)
         Route::get('/resultados/{solicitud}/exportar-completo', [GestorController::class, 'exportar'])
-            ->name('resultados.exportar.completo');
+            ->name('gestor.exportar');
 
         Route::get('/resultados/enviar/{id}', [GestorController::class, 'enviarCorreo'])
-            ->name('resultados.enviarCorreo');
+            ->name('gestor.enviarCorreo');
     });
 });
 

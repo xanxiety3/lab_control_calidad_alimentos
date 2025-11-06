@@ -28,7 +28,7 @@ class Muestra extends Model
     public function ensayos()
     {
         return $this->belongsToMany(Ensayo::class, 'muestra_ensayo')
-            ->withPivot(['id', 'observaciones', 'fecha_analisis', 'resultado', 'unidad_medida', 'codigo_trazabilidad'])
+            ->withPivot(['id', 'observaciones', 'fecha_analisis', 'resultado', 'unidad_medida', 'codigo_trazabilidad','estado'])
             ->withTimestamps();
     }
 

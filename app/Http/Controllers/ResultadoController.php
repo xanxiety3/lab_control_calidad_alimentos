@@ -188,6 +188,7 @@ class ResultadoController extends Controller
                 if ($procesado) {
                     $muestraEnsayo->update([
                         'fecha_analisis' => now(),
+                        'codigo_trazabilidad' => $muestraEnsayo->muestra->codigo_interno,
                     ]);
 
                     // Guardar la muestra para actualizar después

@@ -128,6 +128,7 @@
         <main class="flex-1 p-6">
             {{ $slot }}
         </main>
+@stack('scripts')
 
         <!-- FOOTER -->
         <footer class="bg-gray-200 text-gray-600 text-sm text-center py-3">
