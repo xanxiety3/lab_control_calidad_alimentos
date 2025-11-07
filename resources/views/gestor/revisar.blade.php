@@ -20,11 +20,10 @@
 
                         <p class="text-sm text-gray-600 mt-1">
                             Estado:
-                            <span
-                                class="font-semibold px-2 py-1 rounded-full text-xs shadow-sm
-                                @if($muestra->estado === 'finalizada') bg-green-100 text-green-700
-                                @elseif($muestra->estado === 'en proceso') bg-yellow-100 text-yellow-700
-                                @else bg-gray-100 text-gray-700 @endif">
+                            <span class="font-semibold px-2 py-1 rounded-full text-xs shadow-sm
+                                        @if ($muestra->estado === 'finalizada') bg-green-100 text-green-700
+                                        @elseif($muestra->estado === 'en proceso') bg-yellow-100 text-yellow-700
+                                        @else bg-gray-100 text-gray-700 @endif">
                                 {{ ucfirst($muestra->estado ?? 'Pendiente') }}
                             </span>
                         </p>
@@ -40,76 +39,101 @@
                                 Ensayo: <span class="text-gray-900">{{ $ensayo->ensayo->nombre ?? 'Desconocido' }}</span>
                             </h3>
 
-                            <span
-                                class="px-3 py-1 text-sm font-medium rounded-full shadow-sm
-                                @if($ensayo->estado === 'aceptado') bg-green-100 text-green-700
-                                @elseif($ensayo->estado === 'rechazado') bg-red-100 text-red-700
-                                @else bg-gray-100 text-gray-700 @endif">
+                            <span class="px-3 py-1 text-sm font-medium rounded-full shadow-sm
+                                                    @if ($ensayo->estado === 'aceptado') bg-green-100 text-green-700
+                                                    @elseif($ensayo->estado === 'rechazado') bg-red-100 text-red-700
+                                                    @else bg-gray-100 text-gray-700 @endif">
                                 {{ ucfirst($ensayo->estado ?? 'Pendiente') }}
                             </span>
                         </div>
 
                         {{-- Contenido técnico del ensayo --}}
-                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner space-y-2">
-                            @if ($ensayo->fisicoquimico)
-                                <div class="text-sm text-gray-700 space-y-1">
-                                    <p><strong>Tipo:</strong> {{ $ensayo->fisicoquimico->tipo }}</p>
-                                    <p><strong>Réplicas:</strong>
-                                        R1 (A={{ $ensayo->fisicoquimico->replica1_a }},
-                                        B={{ $ensayo->fisicoquimico->replica1_b }}) /
-                                        R2 (A={{ $ensayo->fisicoquimico->replica2_a }},
-                                        B={{ $ensayo->fisicoquimico->replica2_b }})
-                                    </p>
+                       <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner space-y-2">
+    @if ($ensayo->fisicoquimico)
+        <div class="text-sm text-gray-700 space-y-1">
+            <p><strong>Tipo:</strong> {{ ucfirst(str_replace('_', ' ', $ensayo->fisicoquimico->tipo)) }}</p>
 
-                                    @if ($ensayo->fisicoquimico->tipo == 'grasa')
-                                        <p><strong>Resultado grasa:</strong>
-                                            {{ $ensayo->fisicoquimico->resultado_grasa }}
-                                            {{ $ensayo->fisicoquimico->unidad_grasa }}
-                                        </p>
-                                    @elseif(in_array($ensayo->fisicoquimico->tipo, ['solidos_totales', 'humedad']))
-                                        <p><strong>Resultado %:</strong>
-                                            {{ $ensayo->fisicoquimico->resultado_porcentaje }}
-                                        </p>
-                                    @endif
-                                </div>
-                            @elseif($ensayo->microbiologia)
-                                <div class="text-sm text-gray-700 space-y-1">
-                                    <p><strong>Dilución 1:</strong>
-                                        C1={{ $ensayo->microbiologia->dilucion1_c1 }},
-                                        C2={{ $ensayo->microbiologia->dilucion1_c2 }}
-                                    </p>
-                                    <p><strong>Dilución 2:</strong>
-                                        C1={{ $ensayo->microbiologia->dilucion2_c1 }},
-                                        C2={{ $ensayo->microbiologia->dilucion2_c2 }}
-                                    </p>
-                                    <p><strong>Resultado:</strong>
-                                        {{ $ensayo->microbiologia->resultado }}
-                                        {{ $ensayo->microbiologia->unidad }}
-                                    </p>
-                                </div>
-                            @endif
-                        </div>
+            {{-- Si es tipo grasa --}}
+            @if ($ensayo->fisicoquimico->tipo === 'grasa')
+                <p><strong>Réplicas:</strong>
+                    R1 (A={{ $ensayo->fisicoquimico->replica1_a ?? '-' }},
+                    B={{ $ensayo->fisicoquimico->replica1_b ?? '-' }}) /
+                    R2 (A={{ $ensayo->fisicoquimico->replica2_a ?? '-' }},
+                    B={{ $ensayo->fisicoquimico->replica2_b ?? '-' }})
+                </p>
+                <p><strong>Resultado grasa:</strong>
+                    {{ $ensayo->fisicoquimico->resultado_grasa ?? '-' }}
+                    {{ $ensayo->fisicoquimico->unidad_grasa ?? '' }}
+                </p>
+
+            {{-- Si es tipo solidos_totales o humedad --}}
+            @elseif(in_array($ensayo->fisicoquimico->tipo, ['solidos_totales', 'humedad']))
+                <p><strong>Pesos:</strong>
+                    M0={{ $ensayo->fisicoquimico->replica1_m0 ?? '-' }},
+                    M1={{ $ensayo->fisicoquimico->replica1_m1 ?? '-' }},
+                    M2={{ $ensayo->fisicoquimico->replica1_m2 ?? '-' }}
+                </p>
+                <p><strong>Resultado %:</strong>
+                    {{ $ensayo->fisicoquimico->resultado_porcentaje ?? '-' }}
+                </p>
+
+            {{-- Si es tipo densidad --}}
+            @elseif($ensayo->fisicoquimico->tipo === 'densidad')
+                <p><strong>Resultado densidad:</strong>
+                    {{ $ensayo->fisicoquimico->densidad ?? '-' }}
+                </p>
+
+            {{-- Otros tipos no definidos explícitamente --}}
+            @else
+                <p><strong>Datos adicionales:</strong></p>
+                <pre class="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+                    {{ json_encode($ensayo->fisicoquimico, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
+                </pre>
+            @endif
+        </div>
+
+    @elseif($ensayo->microbiologia)
+        <div class="text-sm text-gray-700 space-y-1">
+            <p><strong>Dilución 1:</strong>
+                C1={{ $ensayo->microbiologia->dilucion1_c1 ?? '-' }},
+                C2={{ $ensayo->microbiologia->dilucion1_c2 ?? '-' }}
+            </p>
+            <p><strong>Dilución 2:</strong>
+                C1={{ $ensayo->microbiologia->dilucion2_c1 ?? '-' }},
+                C2={{ $ensayo->microbiologia->dilucion2_c2 ?? '-' }}
+            </p>
+            <p><strong>Resultado:</strong>
+                {{ $ensayo->microbiologia->resultado ?? '-' }}
+                {{ $ensayo->microbiologia->unidad ?? '' }}
+            </p>
+        </div>
+    @endif
+</div>
+
 
                         <form action="{{ route('gestor.accion', $ensayo->id) }}" method="POST"
-    class="flex flex-wrap gap-2 mt-4">
-    @csrf
+                            class="flex flex-wrap gap-2 mt-4">
+                            @csrf
+                            {{-- Botón Editar --}}
+                            <a href="{{ route('gestor.editEnsayo', $ensayo->id) }}" class="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-md shadow-sm 
+                            hover:bg-green-600 active:scale-[0.98] transition-all duration-200">
+                                <x-heroicon-o-pencil-square class="w-4 h-4" />
+                                Editar
+                            </a>
+                            {{-- Botón Aceptar --}}
+                            <button type="submit" name="accion" value="aceptado" class="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm 
+                            hover:bg-green-700 active:scale-[0.98] transition-all duration-200">
+                                <x-heroicon-o-check class="w-4 h-4" />
+                                Aceptar
+                            </button>
 
-    {{-- Botón Aceptar --}}
-    <button type="submit" name="accion" value="aceptado"
-        class="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm 
-        hover:bg-green-700 active:scale-[0.98] transition-all duration-200">
-        <x-heroicon-o-check class="w-4 h-4" />
-        Aceptar
-    </button>
-
-    {{-- Botón Rechazar --}}
-    <button type="submit" name="accion" value="rechazado"
-        class="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm 
-        hover:bg-red-700 active:scale-[0.98] transition-all duration-200">
-        <x-heroicon-o-x-mark class="w-4 h-4" />
-        Rechazar
-    </button>
-</form>
+                            {{-- Botón Rechazar --}}
+                            <button type="submit" name="accion" value="rechazado" class="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md shadow-sm 
+                            hover:bg-red-700 active:scale-[0.98] transition-all duration-200">
+                                <x-heroicon-o-x-mark class="w-4 h-4" />
+                                Rechazar
+                            </button>
+                        </form>
 
 
                         {{-- Entrega de resultados --}}

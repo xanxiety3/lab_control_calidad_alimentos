@@ -31,16 +31,69 @@ class GestorController extends Controller
     }
 
 
+
+    public function editEnsayo($id)
+    {
+        $ensayo = MuestraEnsayo::with(['ensayo', 'fisicoquimico', 'microbiologia'])->findOrFail($id);
+
+        return view('gestor.editar-ensayo', compact('ensayo'));
+    }
+
+
+    public function updateEnsayo(Request $request, $id)
+    {
+        $muestraEnsayo = MuestraEnsayo::with(['fisicoquimico', 'microbiologia'])->findOrFail($id);
+
+        if ($muestraEnsayo->fisicoquimico) {
+            $muestraEnsayo->fisicoquimico->update($request->only([
+                'tipo',
+                'replica1_a',
+                'replica1_b',
+                'replica2_a',
+                'replica2_b',
+                'resultado_grasa',
+                'unidad_grasa',
+                'resultado_porcentaje',
+                'replica1_m0',
+                'replica1_m1',
+                'replica1_m2',
+                'densidad'
+            ]));
+        }
+
+
+        if ($muestraEnsayo->microbiologia) {
+            $muestraEnsayo->microbiologia->update($request->only([
+                'dilucion1_c1',
+                'dilucion1_c2',
+                'dilucion2_c1',
+                'dilucion2_c2',
+                'resultado',
+                'unidad'
+            ]));
+        }
+
+       return redirect()->route('gestor.edit', ['id' => $muestraEnsayo->muestra->solicitud_id])->with('success', 'Ensayo actualizado correctamente.');
+    }
+
+
+
     public function edit($id)
     {
-       $muestras = Muestra::with(['muestraEnsayos.ensayo', 'muestraEnsayos.fisicoquimico', 'muestraEnsayos.microbiologia'])
+        $muestras = Muestra::with([
+            'muestraEnsayos.ensayo',
+            'muestraEnsayos.fisicoquimico',
+            'muestraEnsayos.microbiologia'
+        ])
+            ->where('solicitud_id', $id) // ← 🔹 filtra solo las muestras de esa solicitud
             ->where('estado', 'finalizada')
             ->get();
 
         return view('gestor.revisar', compact('muestras'));
     }
 
-  public function accion(Request $request, $id)
+
+    public function accion(Request $request, $id)
     {
         $muestraEnsayo = MuestraEnsayo::findOrFail($id);
         $muestraEnsayo->estado = $request->input('accion'); // 'aceptado' o 'rechazado'
@@ -50,26 +103,26 @@ class GestorController extends Controller
     }
 
     public function accionAjax(Request $request)
-{
-    try {
-        $ensayo = MuestraEnsayo::findOrFail($request->ensayo_id);
-        $ensayo->estado = $request->accion;
-        $ensayo->save();
+    {
+        try {
+            $ensayo = MuestraEnsayo::findOrFail($request->ensayo_id);
+            $ensayo->estado = $request->accion;
+            $ensayo->save();
 
-        return response()->json(['success' => true]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
-}
 
-    
-public function cambiarEstado(Request $request, MuestraEnsayo $muestraEnsayo)
-{
-    $request->validate(['estado' => 'required|in:aceptado,rechazado']);
-    $muestraEnsayo->update(['estado' => $request->estado]);
 
-    return back()->with('success', 'Estado actualizado correctamente.');
-}
+    public function cambiarEstado(Request $request, MuestraEnsayo $muestraEnsayo)
+    {
+        $request->validate(['estado' => 'required|in:aceptado,rechazado']);
+        $muestraEnsayo->update(['estado' => $request->estado]);
+
+        return back()->with('success', 'Estado actualizado correctamente.');
+    }
 
 
 

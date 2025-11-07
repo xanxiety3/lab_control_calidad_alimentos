@@ -101,17 +101,25 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['permiso:registrar_resultado_final'])->group(function () {
         Route::get('/gestor-tecnico', [GestorController::class, 'index'])->name('gestor.index');
-       
+
         Route::get('/solicitud/{id}/edit', [GestorController::class, 'edit'])->name('gestor.edit');
         Route::put('/solicitud/{id}/aprobar', [GestorController::class, 'aprobar'])->name('gestor.aprobar');
         Route::post('/gestor/accion-ajax', [GestorController::class, 'accionAjax'])->name('gestor.accion.ajax');
 
-            Route::post('/gestor/acciones/{id}', [GestorController::class, 'accion'])->name('gestor.accion');
+        Route::post('/gestor/acciones/{id}', [GestorController::class, 'accion'])->name('gestor.accion');
         Route::get('/solicitud/{id}/descargar', [GestorController::class, 'descargar'])->name('gestor.descargar');
         Route::post('/solicitud/{id}/enviar', [GestorController::class, 'enviar'])->name('gestor.enviar');
 
-    Route::post('/gestor/cambiar-estado/{id}', [GestorController::class, 'cambiarEstado'])
-        ->name('gestor.cambiarEstado');
+        Route::post('/gestor/cambiar-estado/{id}', [GestorController::class, 'cambiarEstado'])
+            ->name('gestor.cambiarEstado');
+
+        Route::get('/gestor/ensayo/{id}/editar', [GestorController::class, 'editEnsayo'])
+            ->name('gestor.editEnsayo');
+
+        Route::put('/gestor/ensayo/{id}/update', [GestorController::class, 'updateEnsayo'])
+            ->name('gestor.update');
+
+
         // ✅ Para el gestor - Formato completo (mantener el original)
         Route::get('/resultados/{solicitud}/exportar-completo', [GestorController::class, 'exportar'])
             ->name('gestor.exportar');
