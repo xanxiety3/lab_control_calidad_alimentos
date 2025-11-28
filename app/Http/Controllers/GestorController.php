@@ -14,112 +14,124 @@ use Illuminate\Support\Facades\Mail;
 class GestorController extends Controller
 {
 
-    public function index()
+
+ public function index()
     {
         $solicitudes = Solicitud::with('cliente.persona', 'muestras.tipoMuestra')
             ->whereHas('muestras', function ($q) {
-                $q->whereRaw("(
-            SELECT COUNT(*) FROM muestra_ensayo 
-            WHERE muestra_ensayo.muestra_id = muestras.id 
-            AND (resultado IS NULL OR resultado = '' OR resultado = 0)
-        ) = 0");
+                $q->whereRaw("
+                    (
+                        SELECT COUNT(*) 
+                        FROM muestra_ensayo 
+                        WHERE muestra_ensayo.muestra_id = muestras.id
+                        AND (resultado IS NULL OR resultado = '') 
+                    ) = 0 
+                ");
             })
+            ->orderByDesc('created_at')
             ->get();
-
 
         return view('dashboard.gestor', compact('solicitudes'));
     }
 
-
-
-    public function editEnsayo($id)
-    {
-        $ensayo = MuestraEnsayo::with(['ensayo', 'fisicoquimico', 'microbiologia'])->findOrFail($id);
-
-        return view('gestor.editar-ensayo', compact('ensayo'));
-    }
-
-
-    public function updateEnsayo(Request $request, $id)
-    {
-        $muestraEnsayo = MuestraEnsayo::with(['fisicoquimico', 'microbiologia'])->findOrFail($id);
-
-        if ($muestraEnsayo->fisicoquimico) {
-            $muestraEnsayo->fisicoquimico->update($request->only([
-                'tipo',
-                'replica1_a',
-                'replica1_b',
-                'replica2_a',
-                'replica2_b',
-                'resultado_grasa',
-                'unidad_grasa',
-                'resultado_porcentaje',
-                'replica1_m0',
-                'replica1_m1',
-                'replica1_m2',
-                'densidad'
-            ]));
-        }
-
-
-        if ($muestraEnsayo->microbiologia) {
-            $muestraEnsayo->microbiologia->update($request->only([
-                'dilucion1_c1',
-                'dilucion1_c2',
-                'dilucion2_c1',
-                'dilucion2_c2',
-                'resultado',
-                'unidad'
-            ]));
-        }
-
-       return redirect()->route('gestor.edit', ['id' => $muestraEnsayo->muestra->solicitud_id])->with('success', 'Ensayo actualizado correctamente.');
-    }
-
-
-
-    public function edit($id)
+    /**
+     * EDITAR RESULTADOS DE UNA SOLICITUD (solo muestraEnsayos)
+     */
+    public function edit($solicitudId)
     {
         $muestras = Muestra::with([
-            'muestraEnsayos.ensayo',
-            'muestraEnsayos.fisicoquimico',
-            'muestraEnsayos.microbiologia'
+            'muestraEnsayos.ensayo'
         ])
-            ->where('solicitud_id', $id) // ← 🔹 filtra solo las muestras de esa solicitud
-            ->where('estado', 'finalizada')
-            ->get();
+        ->where('solicitud_id', $solicitudId)
+        ->get();
 
         return view('gestor.revisar', compact('muestras'));
     }
 
+    /**
+     * EDITAR UN ÚNICO ENSAYO (solo un resultado)
+     */
+    public function editEnsayo($id)
+    {
+        $ensayo = MuestraEnsayo::with(['ensayo'])->findOrFail($id);
 
+        return view('gestor.editar-ensayo', compact('ensayo'));
+    }
+
+    /**
+     * ACTUALIZAR ÚNICO ENSAYO
+     */
+    public function updateEnsayo(Request $request, $id)
+    {
+        $request->validate([
+            'resultado' => 'required|string',
+        ]);
+
+        $muestraEnsayo = MuestraEnsayo::with('ensayo', 'muestra')->findOrFail($id);
+
+        $muestraEnsayo->update([
+            'resultado'        => $request->resultado,
+            'fecha_analisis'   => now(),
+            'observaciones'    => $request->observaciones ?? null,
+            'estado'           => 'aceptado',
+            'unidad_medida'    => $muestraEnsayo->ensayo->unidad_medida ?? null,
+            'codigo_traza'     => $muestraEnsayo->muestra->codigo_interno ?? null,
+        ]);
+
+        return redirect()
+            ->route('gestor.edit', $muestraEnsayo->muestra->solicitud_id)
+            ->with('success', 'Ensayo actualizado correctamente.');
+    }
+
+    /**
+     * ACEPTAR O RECHAZAR ENSAYO (click rápido)
+     */
     public function accion(Request $request, $id)
     {
-        $muestraEnsayo = MuestraEnsayo::findOrFail($id);
-        $muestraEnsayo->estado = $request->input('accion'); // 'aceptado' o 'rechazado'
-        $muestraEnsayo->save();
+        $request->validate([
+            'accion' => 'required|in:aceptado,rechazado',
+        ]);
+
+        MuestraEnsayo::where('id', $id)->update([
+            'estado' => $request->accion
+        ]);
 
         return back()->with('success', 'Acción registrada correctamente.');
     }
 
+    /**
+     * AJAX — Cambiar estado sin recargar
+     */
     public function accionAjax(Request $request)
     {
         try {
             $ensayo = MuestraEnsayo::findOrFail($request->ensayo_id);
-            $ensayo->estado = $request->accion;
-            $ensayo->save();
+
+            $ensayo->update([
+                'estado' => $request->accion
+            ]);
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false, 
+                'message' => $e->getMessage()
+            ]);
         }
     }
 
-
+    /**
+     * CAMBIAR ESTADO GENERAL
+     */
     public function cambiarEstado(Request $request, MuestraEnsayo $muestraEnsayo)
     {
-        $request->validate(['estado' => 'required|in:aceptado,rechazado']);
-        $muestraEnsayo->update(['estado' => $request->estado]);
+        $request->validate([
+            'estado' => 'required|in:aceptado,rechazado'
+        ]);
+
+        $muestraEnsayo->update([
+            'estado' => $request->estado
+        ]);
 
         return back()->with('success', 'Estado actualizado correctamente.');
     }
