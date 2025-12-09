@@ -7,6 +7,9 @@ use App\Http\Controllers\RecepcionController;
 use App\Http\Controllers\RemisionController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\ResultadoController;
+use App\Http\Controllers\RegistroTemperaturaController;
+use App\Http\Controllers\GraficasController;
+use App\Http\Controllers\ParametrizacionController;
 use App\Http\Controllers\UserController;
 use App\Models\Ensayo;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +27,14 @@ Route::get('/dashboard', function () {
 
 // 🔐 Rutas protegidas por autenticación
 Route::middleware('auth')->group(function () {
+ Route::resource('parametros', ParametrizacionController::class)->except(['show']);
 
+
+    Route::post('/registro', [RegistroTemperaturaController::class, 'storeAmbos'])->name('registros.storeAmbos');
+
+    Route::get('/dashboard', [RegistroTemperaturaController::class, 'index'])->name('dashboard.monitoreo');
+    Route::get('/graficas', [GraficasController::class, 'graficas'])
+        ->name('graficas');
     // ⚙️ Perfil de usuario
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -87,6 +87,13 @@
                                 <span>Informes</span>
                             </a>
                         @endpermiso
+
+                 
+                            <a href="{{ route('dashboard.monitoreo') }}" class="hover:text-secondary flex items-center space-x-1">
+                                <x-heroicon-o-chart-bar class="w-5 h-5" />
+                                <span>Control Tem&Humedad</span>
+                            </a>
+              
                     </div>
 
 
